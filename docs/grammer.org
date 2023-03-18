@@ -1,0 +1,7 @@
+#+Title: ABS Grammer
+
+* root       := [extern definition]*
+* extern     := `extern` prototype
+* definition := `def` prototype expr
+* prototype  := `proc` ident num
+* expr       :=

@@ -1,0 +1,21 @@
+extern proc printdigit i32 : void
+
+struct data {
+  i32 test
+}
+
+struct range {
+  data start
+  i32 stop
+}
+
+def proc main : i32 {
+  range test disc
+  test.start.test 10 =
+  test.stop 10 =
+
+  test.start.test @ printdigit
+  test.stop @ printdigit
+
+  0
+}
