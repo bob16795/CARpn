@@ -1,0 +1,44 @@
+#include "std/sitrings.car"
+
+struct Window {}
+extern proc print u8$* : void
+extern proc glfwInit : bool
+extern proc glfwCreateWindow i32 i32 u8$* ptr ptr : Window*
+extern proc glfwTerminate : void
+extern proc glfwPollEvents : void
+extern proc glfwSwapBuffers Window* : void
+extern proc glfwMakeContextCurrent Window* : void
+extern proc glfwWindowShouldClose Window* : bool
+extern proc glClear u32 : void
+
+def proc main : i32 {
+  Window* window
+
+  glfwInit! if {
+    "Could not init glfw" print
+    1 ret
+  }
+
+  window 640 480 "Hello World!" null null glfwCreateWindow =
+
+  window@ null == if {
+    "Could not create window" print
+    1 ret
+  }
+  
+  window@glfwMakeContextCurrent
+
+  do {
+    16384 glClear
+    
+    window@glfwSwapBuffers
+  
+    glfwPollEvents
+
+    window@glfwWindowShouldClose!
+  }
+
+  glfwTerminate
+
+  0
+}

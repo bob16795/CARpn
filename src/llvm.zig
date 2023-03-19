@@ -1786,8 +1786,8 @@ pub const DIBuilder = opaque {
         flags: c_uint,
     ) *DILocalVariable;
 
-    pub const createGlobalVariable = ZigLLVMCreateGlobalVariable;
-    extern fn ZigLLVMCreateGlobalVariable(
+    pub const createGlobalVariable = LLVMCreateGlobalVariable;
+    extern fn LLVMCreateGlobalVariable(
         dib: *DIBuilder,
         scope: *DIScope,
         name: [*:0]const u8,

@@ -22,12 +22,12 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             var name = try allocator.alloc.alloc(u8, 1);
             name[0] = byte;
 
-            var appendDot = false;
+            var appendCh: ?u8 = null;
 
             while (in_stream.readByte() catch null) |subbyte| {
                 if (!std.ascii.isAlphanumeric(subbyte)) {
-                    if (subbyte == '.')
-                        appendDot = true;
+                    if (!std.ascii.isWhitespace(subbyte))
+                        appendCh = subbyte;
                     break;
                 }
                 name = try allocator.alloc.realloc(name, name.len + 1);
@@ -43,16 +43,44 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (std.mem.eql(u8, name, "var")) appends.type = .Var;
             if (std.mem.eql(u8, name, "def")) appends.type = .Def;
             if (std.mem.eql(u8, name, "if")) appends.type = .If;
+            if (std.mem.eql(u8, name, "do")) appends.type = .Do;
             if (std.mem.eql(u8, name, "struct")) appends.type = .Struct;
+            if (std.mem.eql(u8, name, "alias")) appends.type = .Alias;
             if (std.mem.eql(u8, name, "extern")) appends.type = .Extern;
+
+            name = try allocator.alloc.realloc(name, name.len + 1);
+            name[name.len - 1] = 0;
+
+            appends.value = name[0 .. name.len - 1];
 
             try result.append(appends);
 
-            if (appendDot)
+            if (appendCh) |append| {
+                var adds = try allocator.alloc.alloc(u8, 1);
+                adds[0] = append;
+
                 try result.append(.{
                     .type = .Op,
-                    .value = ".",
+                    .value = adds,
                 });
+            }
+
+            continue;
+        }
+
+        if (byte == '"') {
+            var name = try allocator.alloc.alloc(u8, 0);
+
+            while (in_stream.readByte() catch null) |subbyte| {
+                if (subbyte == '"') break;
+                name = try allocator.alloc.realloc(name, name.len + 1);
+                name[name.len - 1] = subbyte;
+            }
+
+            try result.append(.{
+                .type = .String,
+                .value = name,
+            });
 
             continue;
         }
@@ -86,6 +114,11 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
         var name = try allocator.alloc.alloc(u8, 1);
         name[0] = byte;
 
+        if (result.items[result.items.len - 1].value[0] == '=' and name[0] == '=') {
+            result.items[result.items.len - 1].value = "q";
+            continue;
+        }
+
         try result.append(.{
             .type = .Op,
             .value = name,
@@ -107,25 +140,66 @@ pub fn main() !void {
     parser.Builder = parser.TheContext.createBuilder();
 
     parser.named = std.StringHashMap(parser.StackEntry).init(allocator.alloc);
-    var Types = [_]parser.TypeData{
-        .{ .aType = null },
-        .{ .aType = parser.TheContext.intType(32) },
-        .{ .aType = parser.TheContext.doubleType() },
+
+    var Types: [8]parser.TypeData = undefined;
+    Types = [_]parser.TypeData{
+        .{ .name = "void", .aType = null },
+        .{ .name = "i8", .aType = parser.TheContext.intType(8) },
+        .{ .name = "i16", .aType = parser.TheContext.intType(16) },
+        .{ .name = "i32", .aType = parser.TheContext.intType(32) },
+        .{ .name = "i64", .aType = parser.TheContext.intType(64) },
+        .{ .name = "f64", .aType = parser.TheContext.doubleType() },
+        .{ .name = "ptr", .aType = parser.TheContext.pointerType(5), .data = .{ .Pointer = &Types[0] } },
+        .{ .name = "bool", .aType = parser.TheContext.intType(1) },
     };
+
+    var nullValue: parser.ValueData = .{
+        .kind = Types[6],
+        .value = llvm.Type.constInt(parser.TheContext.intType(64), 0, .False),
+    };
+
+    try parser.named.put("null", .{
+        .Value = &nullValue,
+    });
 
     try parser.named.put("void", .{
         .Type = &Types[0],
     });
-    try parser.named.put("i32", .{
+    try parser.named.put("ptr", .{
+        .Type = &Types[6],
+    });
+    try parser.named.put("bool", .{
+        .Type = &Types[7],
+    });
+    try parser.named.put("i8", .{
         .Type = &Types[1],
     });
-    try parser.named.put("f64", .{
+    try parser.named.put("i16", .{
         .Type = &Types[2],
     });
+    try parser.named.put("i32", .{
+        .Type = &Types[3],
+    });
+    try parser.named.put("i64", .{
+        .Type = &Types[4],
+    });
+    try parser.named.put("u8", .{
+        .Type = &Types[1],
+    });
+    try parser.named.put("u16", .{
+        .Type = &Types[2],
+    });
+    try parser.named.put("u32", .{
+        .Type = &Types[3],
+    });
+    try parser.named.put("u64", .{
+        .Type = &Types[4],
+    });
+    try parser.named.put("f64", .{
+        .Type = &Types[5],
+    });
 
-    var toks = try parseTokens("test.abs");
-
-    std.log.info("{any}", .{toks.items});
+    var toks = try parseTokens("test.car");
 
     while (toks.items.len != 0) {
         switch (toks.items[0].type) {

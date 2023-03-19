@@ -5,12 +5,15 @@ pub const Token = struct {
         Def,
         Proc,
         If,
+        Do,
         Var,
         Number,
+        String,
         Ident,
         Op,
         Struct,
         Prop,
+        Alias,
     };
 
     type: Type,
