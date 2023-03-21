@@ -1,0 +1,9 @@
+extern proc print i8$* : void
+
+def proc main : i32 {
+    0 void*' null == if { "success" print }
+
+    1 if { "success" print }
+
+    0
+}

@@ -1,5 +1,5 @@
 extern proc printd i32 : void
-extern proc print i8$* : void
+extern proc printf i8$* : void
 
 struct arrayStruct {
   i32 [10] data
@@ -12,7 +12,7 @@ def proc main : i32 {
     lmao [2] .data [1] 10 =
     lmao [2] .msg "hello" =
 
-    lmao [2] .msg @ print
+    lmao [2] .msg @ printf
     lmao [2] .data [1] @ printd
 
     0

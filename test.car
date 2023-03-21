@@ -1,7 +1,11 @@
 # include "tools/string.car"
 
 struct Win {}
-extern proc print u8$* : void
+
+# misc fns
+extern proc printf u8$* : void
+
+# glfw fns
 extern proc glfwInit : bool
 extern proc glfwCreateWindow i32 i32 u8$* void* void* : Win*
 extern proc glfwTerminate : void
@@ -9,6 +13,8 @@ extern proc glfwPollEvents : void
 extern proc glfwSwapBuffers Win* : void
 extern proc glfwMakeContextCurrent Win* : void
 extern proc glfwWindowShouldClose Win* : bool
+
+# opengl fns
 extern proc glClear u32 : void
 extern proc glGenBuffers u32 u32$* : void
 extern proc glGenVertexArrays u32 u32$* : void
@@ -28,33 +34,29 @@ extern proc glDrawArrays u32 u32 u32 : void
 
 def proc main : i32 {
   Win* window
-  f32 [9] verts
+  f32 [18] verts
 
-  verts [0] -0.5 =
-  verts [1] -0.5 =
-  verts [2] 0.0 =
+  verts [0]  -0.5 = verts [1]  -0.5 = verts [2]   0.0 =
+  verts [3]   0.5 = verts [4]  -0.5 = verts [5]   0.0 =
+  verts [6]  -0.5 = verts [7]   0.5 = verts [8]   0.0 =
 
-  verts [3] 0.5 =
-  verts [4] -0.5 =
-  verts [5] 0.0 =
-  
-  verts [6] 0.0 =
-  verts [7] 0.5 =
-  verts [8] 0.0 =
+  verts [9]   0.5 = verts [10]  0.5 = verts [11]  0.0 =
+  verts [12]  0.5 = verts [13] -0.5 = verts [14]  0.0 =
+  verts [15] -0.5 = verts [16]  0.5 = verts [17]  0.0 =
 
   glfwInit! if {
-    "Could not init glfw" print
+    "Could not init glfw" printf
     1 ret
   }
 
   window 640 480 "Hello World!" null null glfwCreateWindow =
 
-  window@ null == if {
-    "Could not create window" print
+  window @ null == if {
+    "Could not create window" printf
     1 ret
   }
   
-  window@ glfwMakeContextCurrent
+  window @ glfwMakeContextCurrent
   
   u32 [1] VAOs
   1 VAOs glGenVertexArrays
@@ -77,9 +79,7 @@ def proc main : i32 {
   src
   [1] "
   #version 330 core
-
   out vec4 FragColor;
-
   void main()
   {
     FragColor = vec4(1.0f, 0.5f, 0.3f, 1.0f);
@@ -88,24 +88,24 @@ def proc main : i32 {
 
   1 VBOs glGenBuffers
   34962 VBOs [0] @ glBindBuffer
-  34962 36 verts 35044 glBufferData
+  34962 72 verts 35044 glBufferData
 
   u32 VertexShader
   u32 FragShader
   u32 ShaderProgram
 
   VertexShader 35633 glCreateShader =
-  VertexShader@ 1 src [0] null glShaderSource
-  VertexShader@ glCompileShader
+  VertexShader @ 1 src [0] null glShaderSource
+  VertexShader @ glCompileShader
 
   FragShader 35632 glCreateShader =
-  FragShader@ 1 src [1] null glShaderSource
-  FragShader@ glCompileShader
+  FragShader @ 1 src [1] null glShaderSource
+  FragShader @ glCompileShader
 
   ShaderProgram glCreateProgram =
-  ShaderProgram@ VertexShader@ glAttachShader
-  ShaderProgram@ FragShader@ glAttachShader
-  ShaderProgram@ glLinkProgram
+  ShaderProgram @ VertexShader @ glAttachShader
+  ShaderProgram @ FragShader @   glAttachShader
+  ShaderProgram @ glLinkProgram
 
   0 3 5126 0 12 null glVertexAttribPointer
   0 glEnableVertexAttribArray
@@ -113,15 +113,15 @@ def proc main : i32 {
   do {
     16384 glClear
     
-    ShaderProgram@ glUseProgram
+    ShaderProgram @ glUseProgram
     VAOs [0] @ glBindVertexArray
-    4 0 3 glDrawArrays
+    4 0 6 glDrawArrays
 
-    window@ glfwSwapBuffers
+    window @ glfwSwapBuffers
   
     glfwPollEvents
 
-    window@ glfwWindowShouldClose!
+    window @ glfwWindowShouldClose!
   }
 
   glfwTerminate

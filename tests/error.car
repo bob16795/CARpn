@@ -1,0 +1,10 @@
+extern proc printf i8$* i32 : void
+
+def proc panic i32! : void {
+  "error: %s" swap i32' printf
+}
+
+def proc main : i32! {
+  err "oop"
+}
+

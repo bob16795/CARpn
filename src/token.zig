@@ -13,10 +13,13 @@ pub const Token = struct {
         Macro,
         Ident,
         Bracket,
+        Paren,
         Op,
         Struct,
         Prop,
-        Alias,
+        Lambda,
+        Error,
+        Func,
     };
 
     type: Type,

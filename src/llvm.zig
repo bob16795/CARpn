@@ -550,6 +550,9 @@ pub const Builder = opaque {
     pub const buildStore = LLVMBuildStore;
     extern fn LLVMBuildStore(*Builder, Val: *Value, Ptr: *Value) *Value;
 
+    pub const buildIlLoad = LLVMBuildLoad;
+    extern fn LLVMBuildLoad(*Builder, PointerVal: *Value) *Value;
+
     pub const buildLoad = LLVMBuildLoad2;
     extern fn LLVMBuildLoad2(*Builder, Ty: *Type, PointerVal: *Value, Name: [*:0]const u8) *Value;
 

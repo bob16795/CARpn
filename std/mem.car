@@ -3,7 +3,11 @@ extern proc printd i32 : void
 extern proc printch u8 : void
 
 struct mem {
-  def proc eql u8 [] * u8 [] * i32 : bool {
+  def proc cpy u8 []* u8 []* i32 : void {
+    disc disc disc
+  }
+
+  def proc eql u8 []* u8 []* i32 : bool {
       u8 [] * a
       u8 [] * b
       i32 size

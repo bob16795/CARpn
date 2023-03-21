@@ -46,9 +46,11 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (std.mem.eql(u8, name, "do")) appends.type = .Do;
             if (std.mem.eql(u8, name, "for")) appends.type = .For;
             if (std.mem.eql(u8, name, "struct")) appends.type = .Struct;
-            if (std.mem.eql(u8, name, "alias")) appends.type = .Alias;
             if (std.mem.eql(u8, name, "macro")) appends.type = .Macro;
             if (std.mem.eql(u8, name, "extern")) appends.type = .Extern;
+            if (std.mem.eql(u8, name, "lambda")) appends.type = .Lambda;
+            if (std.mem.eql(u8, name, "fntype")) appends.type = .Func;
+            if (std.mem.eql(u8, name, "err")) appends.type = .Error;
 
             name = try allocator.alloc.realloc(name, name.len + 1);
             name[name.len - 1] = 0;
@@ -64,6 +66,30 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
                 try result.append(.{
                     .type = .Op,
                     .value = adds,
+                });
+            }
+
+            continue;
+        }
+
+        if (byte == '(') {
+            var name = try allocator.alloc.alloc(u8, 0);
+
+            while (in_stream.readByte() catch null) |subbyte| {
+                if (subbyte == ')') break;
+                name = try allocator.alloc.realloc(name, name.len + 1);
+                name[name.len - 1] = subbyte;
+            }
+
+            if (name.len == 0) {
+                try result.append(.{
+                    .type = .Op,
+                    .value = "c",
+                });
+            } else {
+                try result.append(.{
+                    .type = .Paren,
+                    .value = name,
                 });
             }
 
@@ -259,7 +285,10 @@ pub fn main() !void {
     _ = args.next();
 
     while (args.next()) |arg| {
+        std.log.info("LEX {s}", .{arg});
         var toks = try parseTokens(arg);
+
+        std.log.info("CAR {s}", .{arg});
         while (toks.items.len != 0) {
             switch (toks.items[0].type) {
                 .Def => {
@@ -268,6 +297,10 @@ pub fn main() !void {
                 },
                 .Extern => {
                     var ext = try parser.ExternAST.parse(&toks);
+                    _ = try ext.codegen();
+                },
+                .Func => {
+                    var ext = try parser.FuncTypeAST.parse(&toks);
                     _ = try ext.codegen();
                 },
                 .Struct => {
@@ -280,11 +313,22 @@ pub fn main() !void {
                 },
             }
         }
-
         var str = parser.TheModule.printToString();
 
-        std.log.info("{s}", .{str});
+        var file = try std.fs.cwd().createFile("tmp", .{});
+
+        var writing: []const u8 = undefined;
+        writing.ptr = @ptrCast([*]const u8, str);
+        writing.len = 1;
+        while (writing[writing.len - 1] != 0) writing.len += 1;
+        writing.len -= 1;
+
+        _ = try file.write(writing);
+
+        file.close();
     }
+
+    std.log.info("LLVM lol.o", .{});
 
     const CPU: [*:0]const u8 = "generic";
     const features: [*:0]const u8 = "";
@@ -300,4 +344,16 @@ pub fn main() !void {
     var targetMachine = llvm.TargetMachine.create(t, thriple, CPU, features, opt, .Default);
 
     targetMachine.emitToFile(parser.TheModule, out, .ObjectFile);
+
+    std.log.info("CC lol.o", .{});
+
+    var output = try std.ChildProcess.exec(.{
+        .allocator = allocator.alloc,
+        .argv = &[_][]const u8{ "gcc", "lol.o", "-lc", "-lglfw", "-lGL" },
+    });
+
+    if (output.stdout.len != 0)
+        std.log.info("{s}", .{output.stdout});
+    if (output.stderr.len != 0)
+        std.log.err("{s}", .{output.stderr});
 }

@@ -1,0 +1,51 @@
+extern proc printf u8$* : void
+extern proc printd i32 : void
+
+fntype proc testtempFn i32 : i32
+
+struct test {
+    testtempFn temp
+
+    def proc runTemp test* i32 : i32 {
+        swap @ .temp ()
+    }
+}
+
+def proc tmp i32 : i32 {
+    "success" printf
+
+    1 +
+}
+
+def proc main : i32 {
+    test lmao
+
+    lmao.temp (tmp) =
+
+    lambda proc : i32 {
+        10
+    } copy
+
+    () 10 == if {
+        "success" printf
+    }
+
+    () 10 == if {
+        "success" printf
+    }
+
+    lambda proc : i32 {
+        11
+    }
+
+    () 11 == if {
+        "success" printf
+    }
+
+    lmao 10 test.runTemp
+    11 == if {
+        "success" printf
+    }
+
+    0
+}
