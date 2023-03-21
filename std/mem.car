@@ -1,0 +1,32 @@
+extern proc print u8$* : void
+extern proc printd i32 : void
+extern proc printch u8 : void
+
+struct mem {
+  def proc eql u8 [] * u8 [] * i32 : bool {
+      u8 [] * a
+      u8 [] * b
+      i32 size
+
+      size swap =
+      a swap =
+      b swap =
+
+      a @ b @ == if {
+        true ret
+      }
+
+      do {
+        size size @ 1 - =
+
+        a @ size @ [] @
+        b @ size @ [] @ != if {
+          false ret
+        }
+
+        size @ 0 >
+      }
+
+      true
+  }
+}

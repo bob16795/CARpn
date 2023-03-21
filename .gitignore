@@ -3,3 +3,6 @@ a.out
 main
 zig-out
 zig-cache
+docs/.obsidian
+docs/.stfolder
+docs/.trash

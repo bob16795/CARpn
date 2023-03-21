@@ -892,24 +892,17 @@ pub const OpExprAST = struct {
                     .Value => {
                         var R = values.pop();
 
-                        var Indices: [*]const *llvm.Value = &[_]*llvm.Value{Type.Value.value};
-
                         var adds = try allocator.alloc.create(ValueData);
                         adds.* = .{
-                            .kind = .{
-                                .aType = TheContext.pointerType(5),
-                                .name = "ptr",
-                                .data = .{
-                                    .Pointer = R.Value.kind.data.?.Pointer.data.?.Array,
-                                },
-                            },
-                            .value = Builder.buildInBoundsGEP(
-                                R.Value.kind.data.?.Pointer.aType.?,
-                                R.Value.value,
-                                Indices,
-                                1,
-                                "idxtmp",
-                            ),
+                            .kind = R.Value.kind.data.?.Array.*,
+                            //.{
+                            //    .aType = TheContext.pointerType(5),
+                            //    .name = "ptr",
+                            //    .data = .{
+                            //        .Pointer = Type.Value.kind.data.?.Array,
+                            //    },
+                            //},
+                            .value = Builder.buildStructGEP(R.Value.kind.aType.?, Type.Value.value, 0, "subtmp"),
                         };
 
                         try values.append(.{ .Value = adds });
@@ -1066,7 +1059,7 @@ pub const IdentExprAST = struct {
 
                 params[params.len - idx - 1] = val.Value.value;
                 if (!val.Value.kind.sameType(func.args[params.len - idx - 1])) {
-                    std.log.info("{s}, {s}, {s}", .{ try val.Value.kind.getName(), try func.args[params.len - idx - 1].getName(), self.value });
+                    std.log.info("{s}, {s}", .{ try val.Value.kind.getName(), try func.args[params.len - idx - 1].getName() });
                     return error.TypeMismatch;
                 }
             }

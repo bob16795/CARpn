@@ -44,8 +44,10 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (std.mem.eql(u8, name, "def")) appends.type = .Def;
             if (std.mem.eql(u8, name, "if")) appends.type = .If;
             if (std.mem.eql(u8, name, "do")) appends.type = .Do;
+            if (std.mem.eql(u8, name, "for")) appends.type = .For;
             if (std.mem.eql(u8, name, "struct")) appends.type = .Struct;
             if (std.mem.eql(u8, name, "alias")) appends.type = .Alias;
+            if (std.mem.eql(u8, name, "macro")) appends.type = .Macro;
             if (std.mem.eql(u8, name, "extern")) appends.type = .Extern;
 
             name = try allocator.alloc.realloc(name, name.len + 1);
@@ -62,6 +64,30 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
                 try result.append(.{
                     .type = .Op,
                     .value = adds,
+                });
+            }
+
+            continue;
+        }
+
+        if (byte == '[') {
+            var name = try allocator.alloc.alloc(u8, 0);
+
+            while (in_stream.readByte() catch null) |subbyte| {
+                if (subbyte == ']') break;
+                name = try allocator.alloc.realloc(name, name.len + 1);
+                name[name.len - 1] = subbyte;
+            }
+
+            if (name.len == 0) {
+                try result.append(.{
+                    .type = .Op,
+                    .value = "$",
+                });
+            } else {
+                try result.append(.{
+                    .type = .Bracket,
+                    .value = name,
                 });
             }
 
@@ -85,7 +111,7 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             continue;
         }
 
-        if (std.ascii.isDigit(byte)) {
+        if (std.ascii.isDigit(byte) or byte == '-') {
             var name = try allocator.alloc.alloc(u8, 1);
             name[0] = byte;
 
@@ -95,10 +121,17 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
                 name[name.len - 1] = subbyte;
             }
 
-            try result.append(.{
-                .type = .Number,
-                .value = name,
-            });
+            if (std.mem.eql(u8, name, "-")) {
+                try result.append(.{
+                    .type = .Op,
+                    .value = name,
+                });
+            } else {
+                try result.append(.{
+                    .type = .Number,
+                    .value = name,
+                });
+            }
 
             continue;
         }
@@ -113,6 +146,11 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
 
         var name = try allocator.alloc.alloc(u8, 1);
         name[0] = byte;
+
+        if (result.items[result.items.len - 1].value[0] == '!' and name[0] == '=') {
+            result.items[result.items.len - 1].value = "n";
+            continue;
+        }
 
         if (result.items[result.items.len - 1].value[0] == '=' and name[0] == '=') {
             result.items[result.items.len - 1].value = "q";
@@ -141,7 +179,7 @@ pub fn main() !void {
 
     parser.named = std.StringHashMap(parser.StackEntry).init(allocator.alloc);
 
-    var Types: [8]parser.TypeData = undefined;
+    var Types: [9]parser.TypeData = undefined;
     Types = [_]parser.TypeData{
         .{ .name = "void", .aType = null },
         .{ .name = "i8", .aType = parser.TheContext.intType(8) },
@@ -151,6 +189,7 @@ pub fn main() !void {
         .{ .name = "f64", .aType = parser.TheContext.doubleType() },
         .{ .name = "ptr", .aType = parser.TheContext.pointerType(5), .data = .{ .Pointer = &Types[0] } },
         .{ .name = "bool", .aType = parser.TheContext.intType(1) },
+        .{ .name = "f32", .aType = parser.TheContext.floatType() },
     };
 
     var nullValue: parser.ValueData = .{
@@ -158,15 +197,28 @@ pub fn main() !void {
         .value = llvm.Type.constInt(parser.TheContext.intType(64), 0, .False),
     };
 
+    var falseValue: parser.ValueData = .{
+        .kind = Types[7],
+        .value = llvm.Type.constInt(parser.TheContext.intType(1), 0, .False),
+    };
+
+    var trueValue: parser.ValueData = .{
+        .kind = Types[7],
+        .value = llvm.Type.constInt(parser.TheContext.intType(1), 1, .False),
+    };
+
     try parser.named.put("null", .{
         .Value = &nullValue,
+    });
+    try parser.named.put("false", .{
+        .Value = &falseValue,
+    });
+    try parser.named.put("true", .{
+        .Value = &trueValue,
     });
 
     try parser.named.put("void", .{
         .Type = &Types[0],
-    });
-    try parser.named.put("ptr", .{
-        .Type = &Types[6],
     });
     try parser.named.put("bool", .{
         .Type = &Types[7],
@@ -195,35 +247,44 @@ pub fn main() !void {
     try parser.named.put("u64", .{
         .Type = &Types[4],
     });
+    try parser.named.put("f32", .{
+        .Type = &Types[8],
+    });
     try parser.named.put("f64", .{
         .Type = &Types[5],
     });
 
-    var toks = try parseTokens("test.car");
+    var args = try std.process.ArgIterator.initWithAllocator(allocator.alloc);
 
-    while (toks.items.len != 0) {
-        switch (toks.items[0].type) {
-            .Def => {
-                var def = try parser.DefinitionAST.parse(&toks);
-                _ = try def.codegen();
-            },
-            .Extern => {
-                var ext = try parser.ExternAST.parse(&toks);
-                _ = try ext.codegen();
-            },
-            .Struct => {
-                var str = try parser.StructAST.parse(&toks);
-                _ = try str.codegen();
-            },
-            else => {
-                return error.BadToken;
-            },
+    _ = args.next();
+
+    while (args.next()) |arg| {
+        var toks = try parseTokens(arg);
+        while (toks.items.len != 0) {
+            switch (toks.items[0].type) {
+                .Def => {
+                    var def = try parser.DefinitionAST.parse(&toks);
+                    _ = try def.codegen();
+                },
+                .Extern => {
+                    var ext = try parser.ExternAST.parse(&toks);
+                    _ = try ext.codegen();
+                },
+                .Struct => {
+                    var str = try parser.StructAST.parse(&toks);
+                    _ = try str.codegen();
+                },
+                else => {
+                    std.log.info("{s}", .{toks.items[0].value});
+                    return error.BadToken;
+                },
+            }
         }
+
+        var str = parser.TheModule.printToString();
+
+        std.log.info("{s}", .{str});
     }
-
-    var str = parser.TheModule.printToString();
-
-    std.log.info("{s}", .{str});
 
     const CPU: [*:0]const u8 = "generic";
     const features: [*:0]const u8 = "";
