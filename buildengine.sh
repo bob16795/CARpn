@@ -1,0 +1,1 @@
+zig build && ./zig-out/bin/slam-llvm std/mem.car std/hash.car engine/math/color.car engine/math/alge.car engine/utils/graphics.car engine/utils/shader.car engine/utils/texture.car engine/utils/spritebatch.car engine/drawers/sprite.car engine/main.car && ./a.out

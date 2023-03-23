@@ -23,5 +23,6 @@ pub const Token = struct {
     };
 
     type: Type,
+    pos: u64,
     value: []const u8,
 };

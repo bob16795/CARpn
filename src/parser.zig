@@ -197,7 +197,34 @@ pub const StackEntry = union(StackEntryTag) {
 
     pub fn getValue(self: *const StackEntry, kind: *TypeData) !*const StackEntry {
         switch (self.*) {
-            .Value => return self,
+            .Value => {
+                if (kind.data != null and kind.data.? == .Error) {
+                    if (self.Value.kind.sameType(kind.data.?.Error)) {
+                        var values: []const *llvm.Value = &[_]*llvm.Value{
+                            llvm.Type.constInt(TheContext.intType(1), 0, .False),
+                            self.Value.value,
+                        };
+                        var constant = TheContext.constStruct(values.ptr, 2, .True);
+                        var out = Builder.buildAlloca(constant.typeOf(), "err");
+                        _ = Builder.buildStore(constant, out);
+
+                        var result = try allocator.alloc.create(StackEntry);
+                        var val = try allocator.alloc.create(ValueData);
+                        result.* = .{
+                            .Value = val,
+                        };
+
+                        val.* = .{
+                            .kind = kind.*,
+                            .value = out,
+                        };
+
+                        return result;
+                    }
+                    return self;
+                }
+                return self;
+            },
             .Function => return error.NotValue,
             .Type => return error.NotValue,
             .Internal => {
@@ -218,9 +245,13 @@ pub const StackEntry = union(StackEntryTag) {
                                 llvm.Type.constInt(TheContext.intType(1), 0, .False),
                                 llvm.Type.constInt(kind.data.?.Error.aType.?, self.Internal.Int, .False),
                             };
+                            var constant = TheContext.constStruct(values.ptr, 2, .True);
+                            var alloca = Builder.buildAlloca(constant.typeOf(), "err");
+                            _ = Builder.buildStore(constant, alloca);
+
                             val.* = .{
                                 .kind = kind.*,
-                                .value = TheContext.constStruct(values.ptr, 2, .True),
+                                .value = alloca,
                             };
                         }
                     },
@@ -235,9 +266,13 @@ pub const StackEntry = union(StackEntryTag) {
                                 llvm.Type.constInt(TheContext.intType(1), 0, .False),
                                 llvm.Type.constReal(kind.data.?.Error.aType.?, self.Internal.Float),
                             };
+                            var constant = TheContext.constStruct(values.ptr, 2, .True);
+                            var alloca = Builder.buildAlloca(constant.typeOf(), "err");
+                            _ = Builder.buildStore(constant, alloca);
+
                             val.* = .{
                                 .kind = kind.*,
-                                .value = TheContext.constStruct(values.ptr, 2, .True),
+                                .value = alloca,
                             };
                         }
                     },
@@ -246,9 +281,13 @@ pub const StackEntry = union(StackEntryTag) {
                             llvm.Type.constInt(TheContext.intType(1), 1, .False),
                             TheContext.constString(self.Internal.Error.ptr, @intCast(c_uint, self.Internal.Error.len), .False),
                         };
+                        var constant = TheContext.constStruct(values.ptr, 2, .True);
+                        var out = Builder.buildAlloca(constant.typeOf(), "err");
+                        _ = Builder.buildStore(constant, out);
+
                         val.* = .{
                             .kind = kind.*,
-                            .value = TheContext.constStruct(values.ptr, 2, .True),
+                            .value = out,
                         };
                     },
                 }
@@ -266,6 +305,7 @@ pub var TheModule: *llvm.Module = undefined;
 pub var TheContext: *llvm.Context = undefined;
 pub var Builder: *llvm.Builder = undefined;
 pub var TheFunction: ?*FunctionData = null;
+pub var locals: std.ArrayList([]const u8) = undefined;
 
 pub var named: std.StringHashMap(StackEntry) = undefined;
 
@@ -407,7 +447,9 @@ pub const ExpressionAST = struct {
                     // q: ==
                     // n: !=
                     // c: ()
-                    '!', '=', '<', '>', '-', '+', '@', '*', '$', ']', '\'', 'q', 'n', 'c' => {
+                    // A: &&
+                    // O: ||
+                    '!', '=', '<', '>', '-', '+', '@', '*', '$', ']', '\'', 'q', 'n', 'c', 'A', 'O', 'L', 'R', '/' => {
                         var block = try allocator.alloc.create(OpExprAST);
                         block.* = try OpExprAST.parse(toks);
 
@@ -496,8 +538,10 @@ pub const StringExprAST = struct {
     value: []const u8,
 
     pub fn codegen(self: *Self, values: *ValueStack) !void {
-        var str = TheContext.constString(@ptrCast([*]const u8, self.value), @intCast(c_uint, self.value.len), .False);
+        var strVal = TheContext.constString(@ptrCast([*]const u8, self.value), @intCast(c_uint, self.value.len), .False);
         var charType = try getType("u8");
+        var str = TheModule.addGlobal(strVal.typeOf(), "str");
+        str.setInitializer(strVal);
 
         var stringType = try allocator.alloc.create(TypeData);
 
@@ -512,9 +556,9 @@ pub const StringExprAST = struct {
         var value = try allocator.alloc.create(ValueData);
 
         value.* = .{
-            //.value = str,
+            .value = str,
             //.kind = stringType.*,
-            .value = Builder.buildAlloca(str.typeOf(), "ptr"),
+            //.value = Builder.buildAlloca(str.typeOf(), "ptr"),
             .kind = .{
                 .aType = TheContext.pointerType(5),
                 .name = "ptr",
@@ -524,7 +568,7 @@ pub const StringExprAST = struct {
             },
         };
 
-        _ = Builder.buildStore(str, value.value);
+        //_ = Builder.buildStore(str, value.value);
 
         try values.append(.{ .Value = value });
     }
@@ -781,7 +825,7 @@ pub const ProcExprAST = struct {
 
         TheFunction = function;
 
-        var bb = TheContext.appendBasicBlock(function.val, "");
+        var bb = TheContext.appendBasicBlock(function.val, "entry");
         Builder.positionBuilderAtEnd(bb);
 
         var values_tmp = ValueStack.init(allocator.alloc);
@@ -856,31 +900,68 @@ pub const PropExprAST = struct {
         switch (value) {
             .Value => |val| {
                 var kind: *TypeData = &val.kind;
-                if (kind.data != null and kind.data.? == .Pointer) kind = kind.data.?.Pointer;
+                if (kind.data != null and kind.data.? == .Pointer) {
+                    kind = kind.data.?.Pointer;
 
-                if (kind.data != null and kind.data.? != .Struct) {
-                    std.log.err("{s}", .{try kind.getName()});
-                    return error.BadKind;
-                }
-                for (kind.data.?.Struct) |entry, idx| {
-                    if (std.mem.eql(u8, entry.name, self.name)) {
-                        var adds = try allocator.alloc.create(ValueData);
-                        adds.* = .{
-                            .value = Builder.buildStructGEP(kind.aType.?, val.value, @intCast(c_uint, idx), ""),
-                            .kind = .{
-                                .aType = TheContext.pointerType(5),
-                                .name = "ptr",
-                                .data = .{ .Pointer = &kind.data.?.Struct[idx].kind },
-                            },
-                        };
+                    if (kind.data != null and kind.data.? != .Struct) {
+                        std.log.err("{s}", .{try kind.getName()});
+                        return error.BadKind;
+                    }
+                    for (kind.data.?.Struct) |entry, idx| {
+                        if (std.mem.eql(u8, entry.name, self.name)) {
+                            var adds = try allocator.alloc.create(ValueData);
+                            adds.* = .{
+                                .value = Builder.buildStructGEP(kind.aType.?, val.value, @intCast(c_uint, idx), ""),
+                                .kind = .{
+                                    .aType = TheContext.pointerType(5),
+                                    .name = "ptr",
+                                    .data = .{ .Pointer = &kind.data.?.Struct[idx].kind },
+                                },
+                            };
 
-                        try values.append(.{ .Value = adds });
+                            try values.append(.{ .Value = adds });
 
-                        return;
+                            return;
+                        }
+                    }
+                } else {
+                    if (kind.data != null and kind.data.? != .Struct) {
+                        std.log.err("{s}", .{try kind.getName()});
+                        return error.BadKind;
+                    }
+                    for (kind.data.?.Struct) |entry, idx| {
+                        if (std.mem.eql(u8, entry.name, self.name)) {
+                            var adds = try allocator.alloc.create(ValueData);
+                            adds.* = .{
+                                .value = Builder.buildExtractValue(val.value, @intCast(c_uint, idx), "extracted"),
+                                .kind = entry.kind,
+                            };
+
+                            try values.append(.{ .Value = adds });
+
+                            return;
+                        }
                     }
                 }
+                std.log.err("{s}", .{self.name});
+                return error.PropNotFound;
             },
             .Type => |kind| {
+                if (std.mem.eql(u8, self.name, "SIZE")) {
+                    var pushes = try allocator.alloc.create(ValueData);
+                    const indices: []const *llvm.Value = &[_]*llvm.Value{
+                        llvm.Type.constInt(TheContext.intType(32), 1, .False),
+                    };
+                    var size = kind.aType.?.arrayType(1).constInBoundsGEP(getNamed("null").?.Value.value, indices.ptr, 1);
+
+                    pushes.* = .{
+                        .kind = (try getType("i32")).*,
+                        .value = Builder.buildPtrToInt(size, TheContext.intType(32), "SIZE"),
+                    };
+
+                    try values.append(.{ .Value = pushes });
+                    return;
+                }
                 var name = try std.fmt.allocPrint(allocator.alloc, "{?s}.{s}", .{ kind.name, self.name });
                 defer allocator.alloc.free(name);
                 if (named.get(name)) |pushes| {
@@ -904,10 +985,13 @@ pub const PropExprAST = struct {
                     try values.append(pushes);
                     return;
                 }
+                std.log.info("{s}", .{name});
                 return error.Undefined;
             },
             else => return error.InvalidValue,
         }
+        std.log.info("{s}", .{self.name});
+
         return error.PropNotFound;
     }
 
@@ -938,9 +1022,6 @@ pub const IfExprAST = struct {
         var headbb = Builder.getInsertBlock();
         var bodybb = TheContext.appendBasicBlock(TheFunction.?.val, "ifbody");
         var mergebb = TheContext.appendBasicBlock(TheFunction.?.val, "ifmerge");
-
-        _ = Builder.buildBr(headbb);
-        Builder.positionBuilderAtEnd(headbb);
 
         _ = Builder.buildCondBr(condV, bodybb, mergebb);
         Builder.positionBuilderAtEnd(bodybb);
@@ -1210,10 +1291,12 @@ pub const OpExprAST = struct {
             },
             'n' => {
                 var R = values.pop();
-                var L = try values.pop().getValue(&R.Value.kind);
+                var L = values.pop();
 
                 if (R == .Internal)
                     R = (try R.getValue(&L.Value.kind)).*;
+                if (L == .Internal)
+                    L = (try L.getValue(&R.Value.kind)).*;
 
                 //std.log.info("{}, {}", .{R.Value.kind, L.Value.kind});
 
@@ -1237,7 +1320,7 @@ pub const OpExprAST = struct {
                     .Type => |kind| {
                         var adds = try allocator.alloc.create(TypeData);
                         adds.* = .{
-                            .aType = TypeData.errorType(kind.aType.?),
+                            .aType = TheContext.pointerType(5),
                             .name = "err",
                             .data = .{
                                 .Error = kind,
@@ -1327,10 +1410,10 @@ pub const OpExprAST = struct {
 
                         try values.append(.{ .Type = adds });
                     },
-                    .Value => {
+                    .Value, .Internal => {
                         var R = values.pop();
 
-                        var Indices: [*]const *llvm.Value = &[_]*llvm.Value{Type.Value.value};
+                        var Indices: [*]const *llvm.Value = &[_]*llvm.Value{(try Type.getValue(try getType("i32"))).Value.value};
 
                         var adds = try allocator.alloc.create(ValueData);
                         adds.* = .{
@@ -1371,6 +1454,29 @@ pub const OpExprAST = struct {
 
                         try values.append(.{ .Type = adds });
                     },
+                    .Value, .Internal => {
+                        var L = values.pop();
+
+                        if (Val == .Internal)
+                            Val = (try Val.getValue(&L.Value.kind)).*;
+                        if (L == .Internal)
+                            L = (try L.getValue(&Val.Value.kind)).*;
+
+                        var val: *llvm.Value = undefined;
+                        if (std.mem.eql(u8, Val.Value.kind.name, "f32")) {
+                            val = Builder.buildFMul(L.Value.value, Val.Value.value, "multmp");
+                        } else {
+                            val = Builder.buildMul(L.Value.value, Val.Value.value, "multmp");
+                        }
+
+                        var adds = try allocator.alloc.create(ValueData);
+                        adds.* = .{
+                            .kind = Val.Value.kind,
+                            .value = val,
+                        };
+
+                        try values.append(.{ .Value = adds });
+                    },
                     else => return error.InvalidParam,
                 }
             },
@@ -1383,10 +1489,102 @@ pub const OpExprAST = struct {
                 if (L == .Internal)
                     L = (try L.getValue(&R.Value.kind)).*;
 
+                var val: *llvm.Value = undefined;
+                if (std.mem.eql(u8, R.Value.kind.name, "f32")) {
+                    val = Builder.buildFSub(L.Value.value, R.Value.value, "subtmp");
+                } else {
+                    val = Builder.buildSub(L.Value.value, R.Value.value, "subtmp");
+                }
+
                 var adds = try allocator.alloc.create(ValueData);
                 adds.* = .{
                     .kind = R.Value.kind,
-                    .value = Builder.buildSub(L.Value.value, R.Value.value, "subtmp"),
+                    .value = val,
+                };
+
+                try values.append(.{ .Value = adds });
+            },
+            'A' => {
+                var R = values.pop();
+                var L = values.pop();
+
+                if (R == .Internal)
+                    R = (try R.getValue(&L.Value.kind)).*;
+                if (L == .Internal)
+                    L = (try L.getValue(&R.Value.kind)).*;
+
+                var adds = try allocator.alloc.create(ValueData);
+                adds.* = .{
+                    .kind = R.Value.kind,
+                    .value = Builder.buildAnd(L.Value.value, R.Value.value, "subtmp"),
+                };
+
+                try values.append(.{ .Value = adds });
+            },
+            '/' => {
+                var R = values.pop();
+                var L = values.pop();
+
+                if (R == .Internal)
+                    R = (try R.getValue(&L.Value.kind)).*;
+                if (L == .Internal)
+                    L = (try L.getValue(&R.Value.kind)).*;
+
+                var adds = try allocator.alloc.create(ValueData);
+                adds.* = .{
+                    .kind = R.Value.kind,
+                    .value = Builder.buildFDiv(L.Value.value, R.Value.value, "subtmp"),
+                };
+
+                try values.append(.{ .Value = adds });
+            },
+            'L' => {
+                var R = values.pop();
+                var L = values.pop();
+
+                if (R == .Internal)
+                    R = (try R.getValue(&L.Value.kind)).*;
+                if (L == .Internal)
+                    L = (try L.getValue(&R.Value.kind)).*;
+
+                var adds = try allocator.alloc.create(ValueData);
+                adds.* = .{
+                    .kind = R.Value.kind,
+                    .value = Builder.buildShl(L.Value.value, R.Value.value, "subtmp"),
+                };
+
+                try values.append(.{ .Value = adds });
+            },
+            'R' => {
+                var R = values.pop();
+                var L = values.pop();
+
+                if (R == .Internal)
+                    R = (try R.getValue(&L.Value.kind)).*;
+                if (L == .Internal)
+                    L = (try L.getValue(&R.Value.kind)).*;
+
+                var adds = try allocator.alloc.create(ValueData);
+                adds.* = .{
+                    .kind = R.Value.kind,
+                    .value = Builder.buildLShr(L.Value.value, R.Value.value, "subtmp"),
+                };
+
+                try values.append(.{ .Value = adds });
+            },
+            'O' => {
+                var R = values.pop();
+                var L = values.pop();
+
+                if (R == .Internal)
+                    R = (try R.getValue(&L.Value.kind)).*;
+                if (L == .Internal)
+                    L = (try L.getValue(&R.Value.kind)).*;
+
+                var adds = try allocator.alloc.create(ValueData);
+                adds.* = .{
+                    .kind = R.Value.kind,
+                    .value = Builder.buildOr(L.Value.value, R.Value.value, "subtmp"),
                 };
 
                 try values.append(.{ .Value = adds });
@@ -1400,13 +1598,20 @@ pub const OpExprAST = struct {
                 if (L == .Internal)
                     L = (try L.getValue(&R.Value.kind)).*;
 
+                var val: *llvm.Value = undefined;
+                if (std.mem.eql(u8, R.Value.kind.name, "f32")) {
+                    val = Builder.buildFCmp(.ULT, L.Value.value, R.Value.value, "lttmp");
+                } else {
+                    val = Builder.buildICmp(.ULT, L.Value.value, R.Value.value, "lttmp");
+                }
+
                 var adds = try allocator.alloc.create(ValueData);
                 adds.* = .{
                     .kind = .{
                         .aType = TheContext.intType(1),
                         .name = "bool",
                     },
-                    .value = Builder.buildICmp(.ULT, L.Value.value, R.Value.value, "lttmp"),
+                    .value = val,
                 };
 
                 try values.append(.{ .Value = adds });
@@ -1440,10 +1645,17 @@ pub const OpExprAST = struct {
                 if (L == .Internal)
                     L = (try L.getValue(&R.Value.kind)).*;
 
+                var val: *llvm.Value = undefined;
+                if (std.mem.eql(u8, R.Value.kind.name, "f32")) {
+                    val = Builder.buildFAdd(L.Value.value, R.Value.value, "addtmp");
+                } else {
+                    val = Builder.buildAdd(L.Value.value, R.Value.value, "addtmp");
+                }
+
                 var adds = try allocator.alloc.create(ValueData);
                 adds.* = .{
                     .kind = R.Value.kind,
-                    .value = Builder.buildAdd(L.Value.value, R.Value.value, "addtmp"),
+                    .value = val,
                 };
 
                 try values.append(.{ .Value = adds });
@@ -1486,7 +1698,7 @@ pub const OpExprAST = struct {
                 bak.* = values.items[values.items.len - 1].kind;
 
                 values.items[values.items.len - 1].kind = .{
-                    .aType = TypeData.errorType(bak.aType.?),
+                    .aType = TheContext.pointerType(5),
                     .name = "err",
                     .data = .{
                         .Error = bak,
@@ -1569,6 +1781,8 @@ pub const IdentExprAST = struct {
                     .Pointer = kind,
                 },
             };
+
+            try locals.append(self.value);
 
             try named.put(self.value, .{ .Value = adds });
         } else {
@@ -1751,7 +1965,7 @@ pub const DefinitionAST = struct {
 
         TheFunction = function;
 
-        var bb = TheContext.appendBasicBlock(function.val, "");
+        var bb = TheContext.appendBasicBlock(function.val, "entry");
         Builder.positionBuilderAtEnd(bb);
 
         var values = ValueStack.init(allocator.alloc);
@@ -1771,16 +1985,26 @@ pub const DefinitionAST = struct {
 
         try self.body.codegen(&values);
 
+        for (locals.items) |item| {
+            _ = named.remove(item);
+        }
+
         if (values.items.len == 1) {
             var val = try values.items[0].getValue(function.rets.?);
 
-            if (!val.Value.kind.sameType(function.rets.?)) return error.ReturnMismatch;
+            if (!val.Value.kind.sameType(function.rets.?)) {
+                std.log.info("{s}", .{self.proto.name});
+                return error.ReturnMismatch;
+            }
 
             _ = Builder.buildRet(val.Value.value);
 
             return function.val;
         } else if (values.items.len == 0) {
-            if (function.rets != null) return error.ReturnMismatch;
+            if (function.rets != null) {
+                std.log.info("{s}", .{self.proto.name});
+                return error.ReturnMismatch;
+            }
 
             _ = Builder.buildRetVoid();
 

@@ -1,10 +1,31 @@
-extern proc printf i8$* i32 : void
+extern proc printf i8$* i8$* : void
+extern proc exit i8 : void
 
-def proc panic i32! : void {
-  "error: %s" swap i32' printf
+def proc printerr i8$* : void {
+    "ERROR: %s
+" swap printf
 }
 
-def proc main : i32! {
-  err "oop"
+def proc try i32! : i32 {
+  copy bool$*' 0 $ @ if {
+    copy bool$*' 1 $ i8$*' printerr
+    1 exit
+  }
+  bool$*' 1 $ i32*' @
 }
 
+def proc getten : i32! {
+  i32! result
+  result 10 =
+  result @
+}
+
+def proc main : i32 {
+  getten try
+
+  10 == if {
+    err "GoodError" try disc
+  }
+
+  0
+}

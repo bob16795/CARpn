@@ -1,0 +1,31 @@
+struct Image {}
+extern proc stbi_load u8$* u32* u32* u32* u32 : Image*
+extern proc stbi_image_free Image* : void
+
+struct Texture {
+  u32 id
+  IVec2 size
+
+  def proc new u8$* : Texture* {
+    u8$* file
+    Texture* result
+    Image* data
+
+    file swap =
+    result Texture.SIZE malloc =
+
+    u32 channels
+
+    data file@ result@.size.x result@.size.y channels 4 stbi_load =
+
+    1 result@.id glGenTextures
+    3553 result@.id@ glBindTexture
+
+    3553 0 6408 result@.size.x@ result@.size.y@ 0 6408 5121 data@ glTexImage2D
+    3553 glGenerateMipmap
+
+    data@ stbi_image_free
+
+    result@
+  }
+}

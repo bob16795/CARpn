@@ -25,7 +25,7 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             var appendCh: ?u8 = null;
 
             while (in_stream.readByte() catch null) |subbyte| {
-                if (!std.ascii.isAlphanumeric(subbyte)) {
+                if (!std.ascii.isAlphanumeric(subbyte) and subbyte != '_') {
                     if (!std.ascii.isWhitespace(subbyte))
                         appendCh = subbyte;
                     break;
@@ -36,6 +36,7 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
 
             var appends = token.Token{
                 .type = .Ident,
+                .pos = try file.getPos(),
                 .value = name,
             };
 
@@ -65,6 +66,7 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
 
                 try result.append(.{
                     .type = .Op,
+                    .pos = try file.getPos(),
                     .value = adds,
                 });
             }
@@ -84,11 +86,13 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (name.len == 0) {
                 try result.append(.{
                     .type = .Op,
+                    .pos = try file.getPos(),
                     .value = "c",
                 });
             } else {
                 try result.append(.{
                     .type = .Paren,
+                    .pos = try file.getPos(),
                     .value = name,
                 });
             }
@@ -108,11 +112,13 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (name.len == 0) {
                 try result.append(.{
                     .type = .Op,
+                    .pos = try file.getPos(),
                     .value = "$",
                 });
             } else {
                 try result.append(.{
                     .type = .Bracket,
+                    .pos = try file.getPos(),
                     .value = name,
                 });
             }
@@ -131,6 +137,7 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
 
             try result.append(.{
                 .type = .String,
+                .pos = try file.getPos(),
                 .value = name,
             });
 
@@ -150,11 +157,13 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (std.mem.eql(u8, name, "-")) {
                 try result.append(.{
                     .type = .Op,
+                    .pos = try file.getPos(),
                     .value = name,
                 });
             } else {
                 try result.append(.{
                     .type = .Number,
+                    .pos = try file.getPos(),
                     .value = name,
                 });
             }
@@ -183,9 +192,30 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             continue;
         }
 
+        if (result.items[result.items.len - 1].value[0] == '&' and name[0] == '&') {
+            result.items[result.items.len - 1].value = "A";
+            continue;
+        }
+
+        if (result.items[result.items.len - 1].value[0] == '|' and name[0] == '|') {
+            result.items[result.items.len - 1].value = "O";
+            continue;
+        }
+
+        if (result.items[result.items.len - 1].value[0] == '<' and name[0] == '<') {
+            result.items[result.items.len - 1].value = "L";
+            continue;
+        }
+
+        if (result.items[result.items.len - 1].value[0] == '>' and name[0] == '>') {
+            result.items[result.items.len - 1].value = "R";
+            continue;
+        }
+
         try result.append(.{
             .type = .Op,
             .value = name,
+            .pos = try file.getPos(),
         });
     }
 
@@ -204,6 +234,7 @@ pub fn main() !void {
     parser.Builder = parser.TheContext.createBuilder();
 
     parser.named = std.StringHashMap(parser.StackEntry).init(allocator.alloc);
+    parser.locals = std.ArrayList([]const u8).init(allocator.alloc);
 
     var Types: [9]parser.TypeData = undefined;
     Types = [_]parser.TypeData{
@@ -349,7 +380,7 @@ pub fn main() !void {
 
     var output = try std.ChildProcess.exec(.{
         .allocator = allocator.alloc,
-        .argv = &[_][]const u8{ "gcc", "lol.o", "-lc", "-lglfw", "-lGL" },
+        .argv = &[_][]const u8{ "gcc", "lol.o", "-lm", "-lc", "-lglfw", "-lGL", "test.c" },
     });
 
     if (output.stdout.len != 0)

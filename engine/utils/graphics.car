@@ -1,0 +1,88 @@
+struct Win {}
+
+# glfw externs
+extern proc glfwInit : bool
+extern proc glfwCreateWindow i32 i32 u8$* void* void* : Win*
+extern proc glfwTerminate : void
+extern proc glfwPollEvents : void
+extern proc glfwSwapBuffers Win* : void
+extern proc glfwMakeContextCurrent Win* : void
+extern proc glfwWindowShouldClose Win* : bool
+extern proc glfwGetFramebufferSize Win* i32* i32* : void
+
+extern proc glClearColor f32 f32 f32 f32 : void
+extern proc glClear u32 : void
+extern proc glEnable u32 : void
+extern proc glBlendFunc u32 u32 : void
+extern proc glDeleteBuffers u32 u32* : void
+extern proc glGenBuffers u32 u32* : void
+extern proc glBindBuffer u32 u32 : void
+extern proc glBindTexture u32 u32 : void
+extern proc glBufferData u32 u32 void* u32 : void
+extern proc glVertexAttribPointer u32 u32 u32 u32 u32 void* : void
+extern proc glEnableVertexAttribArray u32 : void
+extern proc glDrawArrays u32 u32 u32 : void
+extern proc glCreateShader u32 : u32
+extern proc glCreateProgram : u32
+extern proc glShaderSource u32 u32 void* u8$*$* : void
+extern proc glCompileShader u32 : void
+extern proc glAttachShader u32 u32 : void
+extern proc glLinkProgram u32 : void
+extern proc glUseProgram u32 : void
+extern proc glGenTextures u32 u32* : void
+extern proc glTexImage2D u32 u32 u32 u32 u32 u32 u32 u32 void* : void
+extern proc glGenerateMipmap u32 : void
+extern proc glGetUniformLocation u32 u8$* : u32
+extern proc glUniformMatrix4fv u32 u32 u32 void* : void
+
+struct GFXContext {
+  Win* win
+  Color bg
+  IVec2 size
+
+  def proc init : GFXContext* {
+    GFXContext* result
+
+    result GFXContext.SIZE malloc =
+
+    glfwInit! if {
+        "Could not init glfw" printf
+        1 exit
+    }
+  
+    result@.win 640 480 "CARpn Test" null null glfwCreateWindow =
+
+    result@.win@ glfwMakeContextCurrent
+
+    result@.win@ result@.size.x result@.size.y glfwGetFramebufferSize
+
+    result@.bg.r 0.0 =
+    result@.bg.g 0.0 =
+    result@.bg.b 0.0 =
+    result@.bg.a 1.0 =
+
+    result@
+  }
+
+  def proc poll GFXContext* : bool {
+    glfwPollEvents
+    .win@ glfwWindowShouldClose !
+  }
+
+  def proc clear GFXContext* : void {
+    GFXContext* ctx
+
+    ctx swap =
+
+    ctx@.bg.r@ ctx@.bg.g@ ctx@.bg.b@ ctx@.bg.a@ glClearColor
+    16384 glClear
+  }
+
+  def proc swap GFXContext* : void {
+    .win@ glfwSwapBuffers
+  }
+  
+  def proc free GFXContext* : void {
+    free
+  }
+}

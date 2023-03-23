@@ -1,6 +1,9 @@
-extern proc print u8$* : void
-extern proc printd i32 : void
-extern proc printch u8 : void
+extern proc printf u8$* : void
+extern proc malloc u32 : void*
+extern proc calloc u32 u32 : void*
+extern proc realloc void* u32 : void*
+extern proc free void* : void
+extern proc exit u32 : void
 
 struct mem {
   def proc cpy u8 []* u8 []* i32 : void {
@@ -32,5 +35,9 @@ struct mem {
       }
 
       true
+  }
+
+  def proc add void* i64 : void* {
+      swap +
   }
 }

@@ -1,0 +1,27 @@
+struct Hash {
+  def proc get u8$* i32 : i64 {
+    i64 result
+    i32 idx
+    u8$* str
+    i64 c
+
+    copy 0 == if {
+      0 ret
+    }
+
+    idx swap =
+    str swap =
+    result 5381 =
+
+    do {
+      c str@ idx@ mem.add u8*' @ i64' =
+
+      result result@ 5 << result@ + c@ + =
+
+      idx idx @ 1 - =
+      idx @ 0 >
+    }
+
+    result @
+  }
+}

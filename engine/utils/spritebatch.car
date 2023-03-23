@@ -1,0 +1,247 @@
+struct Vert {
+  f32 x
+  f32 y
+  f32 z
+  f32 u
+  f32 v
+  f32 r
+  f32 g
+  f32 b
+  f32 a
+}
+
+struct Verts {
+  Vert$* verts
+  i32 len
+  
+  def proc getHash Verts* : i64 {
+    Verts* verts
+
+    verts swap =
+
+    verts@.verts@ verts@.len@ Vert.SIZE * Hash.get
+  }
+}
+
+fntype proc GetVertsFn void* : Verts*
+
+struct Drawer {
+  GetVertsFn getVerts
+  Texture* tex
+  void* self
+
+  def proc genVerts Drawer* : Verts* {
+    copy @ .self
+    covr @ .getVerts ()
+    swap disc
+  }
+}
+
+struct SBQueueEntry {
+  bool update
+  u64 hash
+  Texture* tex
+  Verts* verts
+
+  def proc getHash SBQueueEntry* : i64 {
+    SBQueueEntry* entry
+
+    entry swap =
+
+    entry@.tex@ entry@.verts@ Verts.getHash +
+  }
+}
+
+struct SBQueue {
+  SBQueueEntry$* entrys
+  u32 len
+
+  def proc getSize SBQueue* : i32 {
+    .len@ SBQueueEntry.SIZE *
+  }
+
+  def proc getEntry SBQueue* i32 : SBQueueEntry* {
+    SBQueue* q
+
+    swap q swap =
+
+    SBQueueEntry.SIZE * q@.entrys@ swap mem.add SBQueueEntry*' 
+  }
+}
+
+struct SBContext {
+  Texture* tex
+}
+
+struct SpriteBatch {
+  SBQueue* prevQueue
+  SBQueue* currQueue
+
+  u32$* buffers
+  u32 buffersCount
+  Vec2 size
+
+  def proc init SpriteBatch* : void {
+    SpriteBatch* sb
+
+    sb swap =
+
+    sb@.buffersCount 0 =
+    sb@.buffers 0 malloc =
+
+    sb@.currQueue SBQueue.SIZE malloc =
+    sb@.prevQueue SBQueue.SIZE malloc =
+    sb@.currQueue@.len 0 =
+    sb@.prevQueue@.len 0 =
+    sb@.currQueue@.entrys 10 malloc =
+    sb@.prevQueue@.entrys 10 malloc =
+  }
+
+  def proc deinit SpriteBatch* : void {
+    SpriteBatch* sb
+
+    sb swap =
+
+    sb@.currQueue@.entrys@ free
+    sb@.currQueue@ free
+    sb@.prevQueue@.entrys@ free
+    sb@.prevQueue@ free
+  }
+
+  def proc draw SpriteBatch* Drawer* : void {
+    SBQueueEntry entry
+    Drawer* dr
+    SpriteBatch* sb
+
+    dr swap =
+    sb swap =
+
+    entry.update true =
+    entry.tex dr@.tex@ =
+    entry.verts dr@ Drawer.genVerts =
+
+    i32 old
+
+    old sb@.currQueue@.len@ =
+    sb@.currQueue@.len sb@.currQueue@.len@ 1 + =
+
+    sb@.currQueue@.entrys
+    sb@.currQueue@.entrys@
+    sb@.currQueue@ SBQueue.getSize
+    realloc =
+
+    sb@.currQueue@ old@ SBQueue.getEntry entry@ =
+  }
+
+  def proc finish SpriteBatch* : void {
+    SpriteBatch* sb
+
+    sb swap =
+
+    i32 idx
+    sb@.currQueue@.len if {
+      idx 0 =
+      do {
+        sb@.currQueue@ idx@ SBQueue.getEntry .update true =
+        
+        idx @ sb@.prevQueue@.len @ < if {
+          sb@.currQueue@ idx@ SBQueue.getEntry .hash
+          sb@.currQueue@ idx@ SBQueue.getEntry SBQueueEntry.getHash =
+          sb@.currQueue@ idx@ SBQueue.getEntry .update
+          sb@.currQueue@ idx@ SBQueue.getEntry .hash @
+          sb@.prevQueue@ idx@ SBQueue.getEntry .hash @ !=
+          =
+        }
+
+        idx idx @ 1 + =
+        idx@ sb@.currQueue@.len@ <
+      }
+    }
+
+    3042 glEnable
+    770 771 glBlendFunc
+
+    sb@.buffersCount@ sb@.currQueue@.len@ != if {
+      i32 target
+      target sb@.currQueue@.len@ =
+
+      target@ sb@.buffersCount@ < if {
+      "less
+" printf
+        sb@.buffersCount@ target@ -
+        sb@.buffers@ target@ i32.SIZE * mem.add
+        glDeleteBuffers
+      }
+
+      sb@.buffers 
+      sb@.buffers@ 
+      target@ i32.SIZE *
+      realloc
+      =
+
+      target@ sb@.buffersCount@ > if {
+        target@ sb@.buffersCount@ -
+        sb@.buffers@ sb@.buffersCount@ i32.SIZE * mem.add
+        glGenBuffers
+      }
+  
+      sb@.buffersCount target @ =
+    }
+
+    SBContext ctx
+    SBQueueEntry* entry
+
+    sb@.currQueue@.len@ 0 != if {
+      idx 0 =
+      do {
+        entry sb@.currQueue@ idx@ SBQueue.getEntry =
+
+        ctx@.tex
+        entry@.tex@ != if {
+          3553
+          entry@.tex@.id@
+          glBindTexture
+        }
+
+        ctx.tex
+        sb@.currQueue@ idx@ SBQueue.getEntry.tex@ =
+
+        34962
+        sb@.buffers@ idx@ i32.SIZE * mem.add i32*' @
+        glBindBuffer
+
+        entry@.update@ entry@.verts@.len@ 0 != && if {
+          34962
+          entry@.verts@.len@ Vert.SIZE *
+          entry@.verts@.verts@
+          35048
+          glBufferData
+        }
+
+        0 3 5126 0 Vert.SIZE 0 f32.SIZE * void*' glVertexAttribPointer
+        1 2 5126 0 Vert.SIZE 3 f32.SIZE * void*' glVertexAttribPointer
+        2 4 5126 0 Vert.SIZE 5 f32.SIZE * void*' glVertexAttribPointer
+        0 glEnableVertexAttribArray
+        1 glEnableVertexAttribArray
+        2 glEnableVertexAttribArray
+        
+        4 0 entry@.verts@.len@ glDrawArrays
+
+        idx idx @ 1 + =
+        idx@ sb@.currQueue@.len@ <
+      }
+    }
+
+    sb@.prevQueue@.entrys@ free
+    sb@.prevQueue@ free
+
+    sb@.prevQueue sb@.currQueue@ =
+
+    sb@.currQueue SBQueue.SIZE malloc =
+
+    sb@.currQueue@.entrys 10 malloc =
+    sb@.currQueue@.len 0 =
+
+    # todo: free prev queue & swap
+  }
+}
