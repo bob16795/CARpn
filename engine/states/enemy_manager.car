@@ -1,0 +1,4 @@
+struct Enemy {
+  Sprite sprite
+  bool friendly
+}

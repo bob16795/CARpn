@@ -1,7 +1,0 @@
-def proc main : i32 {
-  "lol" "lol" 3 mem.eql   if { "succ eq"   print }
-  "fdsa" copy 3 mem.eql   if { "succ same" print }
-  "lol" "lom" 3 mem.eql ! if { "succ neq"  print }
-
-  0
-}

@@ -2,6 +2,9 @@ struct Sprite {
   Vec2 size
   Vec2 pos
 
+  Shader* shd
+  Texture* tex
+
   def proc getVerts void* : Verts* {
     Sprite* self
 

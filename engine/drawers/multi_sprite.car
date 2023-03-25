@@ -5,6 +5,9 @@ struct MultiSprite {
   Vec2 grid
   Vec2 current
 
+  Texture* tex
+  Shader* shd
+
   def proc getVerts void* : Verts* {
     MultiSprite* self
 

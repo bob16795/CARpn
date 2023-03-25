@@ -1,5 +1,4 @@
 struct GameState {
-  Drawer [1] drawers
   MultiSprite playersprite
   Texture*[2] textures
   Vec2 vel
@@ -31,9 +30,8 @@ struct GameState {
     result.vel.x 0.0 =
     result.vel.y 0.0 =
 
-    result.drawers [0].getVerts (MultiSprite.getVerts) =
-    result.drawers [0].tex result.textures [0] @ =
-    result.drawers [0].shader shd [0] @ =
+    result.playersprite.tex result.textures [0] @ =
+    result.playersprite.shd shd [0] @ =
 
     result.bullets result.textures [1] @ shd [0] @ BulletManager.new =
     result.stars shd [1] @ Stars.init =
@@ -122,11 +120,8 @@ struct GameState {
 
     state@.bullets sb@ BulletManager.draw
 
-    state@.drawers [0].self state@.playersprite =
-    sb@ state@.drawers [0] @ SpriteBatch.draw
-
-    state@.stars.drawer.self state@.stars =
-    sb@ state@.stars.drawer@ SpriteBatch.draw
+    sb@ state@.playersprite@ SpriteBatch.draw
+    sb@ state@.stars@ SpriteBatch.draw
   }
 
 

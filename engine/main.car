@@ -88,7 +88,6 @@ extern proc getTimeFloat : f32
 
 def proc main : i32 {
   SpriteBatch sb
-  Drawer drawer
   GFXContext* ctx
   Shader* [2] shd
 
@@ -111,7 +110,7 @@ def proc main : i32 {
   f32 accumulator
 
   t 0.0 =
-  dt 0.04 =
+  dt 0.03 =
 
   currentTime getTimeFloat =
   accumulator 0.0 =

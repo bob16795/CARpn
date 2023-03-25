@@ -1265,7 +1265,7 @@ pub const PropExprAST = struct {
                         }
                     }
                 }
-                std.log.err("{s}", .{self.name});
+                std.log.err("{s}, {s}", .{self.name, try val.kind.getName()});
                 return error.PropNotFound;
             },
             .Type => |kind| {

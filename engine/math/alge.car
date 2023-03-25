@@ -122,7 +122,7 @@ struct Vec3 {
     f32 m
     Vec3 result
 
-    result swap =
+    result swap o=
 
     m result @ Vec3.mag =
 

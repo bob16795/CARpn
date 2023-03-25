@@ -11,7 +11,8 @@ struct Star {
 struct Stars {
   u32 buffer
   Star [100] stars
-  Drawer drawer
+  Texture* tex
+  Shader* shd
 
   def proc update Stars* : void {
     Stars* self
@@ -24,7 +25,7 @@ struct Stars {
       Star* current
 
       current self@.stars idx@ Star.SIZE * i64' mem.add =
-      current@.pos.y copy@ current@.spd@ 2.0 * + =
+      current@.pos.y copy@ current@.spd@ 4.0 * + =
 
       current@.pos.y@ 480.0 > if {
         current@.pos.y -10.0 =
@@ -135,11 +136,10 @@ struct Stars {
   }
 
   def proc init Shader* : Stars {
-    Shader* shader
-
-    shader swap =
-
     Stars result
+
+    result.shd swap =
+    result.tex Texture.SIZE i64' malloc =
 
     setuprand
 
@@ -161,9 +161,6 @@ struct Stars {
     }
 
     1 result.buffer glGenBuffers
-
-    result.drawer.getVerts (Stars.getVerts) =
-    result.drawer.shader shader@ =
 
     result@
   }

@@ -1,8 +1,9 @@
 struct Bullet {
   Sprite sprite
-  Drawer drawer
   bool friendly
   Vec2 vel
+
+  bool dead
 
   def proc draw Bullet SpriteBatch* Texture* Shader* : void {
     Bullet self
@@ -15,11 +16,9 @@ struct Bullet {
     sb swap =
     self swap =
 
-    self.drawer.self self.sprite =
-    self.drawer.shader shd@ =
-    self.drawer.tex tex@ =
-    self.drawer.getVerts (Sprite.getVerts) =
-    sb@ self.drawer@ SpriteBatch.draw
+    self.sprite.shd shd@ =
+    self.sprite.tex tex@ =
+    sb@ self@.sprite SpriteBatch.draw
   }
 
   def proc update Bullet* f32 f32 : void {

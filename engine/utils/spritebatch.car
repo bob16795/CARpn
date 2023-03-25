@@ -26,19 +26,6 @@ struct Verts {
 fntype proc GetVertsFn void* : Verts*
 extern proc printint i32 : void
 
-struct Drawer {
-  GetVertsFn getVerts
-  Texture* tex
-  Shader* shader
-  void* self
-
-  def proc genVerts Drawer* : Verts* {
-    copy @ .self
-    covr @ .getVerts ()
-    swap disc
-  }
-}
-
 struct SBQueueEntry {
   bool update
   u64 hash
@@ -112,9 +99,9 @@ struct SpriteBatch {
     sb@.prevQueue@ free
   }
 
-  def proc draw SpriteBatch* Drawer : void {
+  def proc draw SpriteBatch* anytype : void {
     SBQueueEntry entry
-    Drawer dr
+    copy.TYPE dr
     SpriteBatch* sb
 
     dr swap =
@@ -122,8 +109,8 @@ struct SpriteBatch {
 
     entry.update true =
     entry.tex dr.tex@ =
-    entry.shader dr.shader@ =
-    entry.verts dr Drawer.genVerts =
+    entry.shader dr.shd@ =
+    entry.verts dr dr@.TYPE.getVerts =
 
     i32 old
 
@@ -247,7 +234,20 @@ struct SpriteBatch {
       }
     }
 
-    # sb@.prevQueue@.entrys@ free
+
+    idx 0 =
+    idx@ sb@.prevQueue@.len@ < if {
+      do {
+        entry sb@.prevQueue@ idx@ SBQueue.getEntry =
+        entry@.verts@.verts@ free
+
+        idx idx @ 1 + =
+        idx@ sb@.prevQueue@.len@ <
+      }
+    }
+
+
+    sb@.prevQueue@.entrys@ free
     sb@.prevQueue@ free
 
     sb@.prevQueue sb@.currQueue@ =
