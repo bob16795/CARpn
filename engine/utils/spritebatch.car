@@ -19,15 +19,17 @@ struct Verts {
 
     verts swap =
 
-    verts@.verts@ verts@.len@ Vert.SIZE * Hash.get
+    verts@.verts@ u8$*' verts@.len@ Vert.SIZE * Hash.get
   }
 }
 
 fntype proc GetVertsFn void* : Verts*
+extern proc printint i32 : void
 
 struct Drawer {
   GetVertsFn getVerts
   Texture* tex
+  Shader* shader
   void* self
 
   def proc genVerts Drawer* : Verts* {
@@ -41,6 +43,7 @@ struct SBQueueEntry {
   bool update
   u64 hash
   Texture* tex
+  Shader* shader
   Verts* verts
 
   def proc getHash SBQueueEntry* : i64 {
@@ -57,7 +60,7 @@ struct SBQueue {
   u32 len
 
   def proc getSize SBQueue* : i32 {
-    .len@ SBQueueEntry.SIZE *
+    @.len SBQueueEntry.SIZE *
   }
 
   def proc getEntry SBQueue* i32 : SBQueueEntry* {
@@ -65,12 +68,13 @@ struct SBQueue {
 
     swap q swap =
 
-    SBQueueEntry.SIZE * q@.entrys@ swap mem.add SBQueueEntry*' 
+    SBQueueEntry.SIZE * q@.entrys@ swap i64' mem.add
   }
 }
 
 struct SBContext {
   Texture* tex
+  Shader* shader
 }
 
 struct SpriteBatch {
@@ -89,8 +93,8 @@ struct SpriteBatch {
     sb@.buffersCount 0 =
     sb@.buffers 0 malloc =
 
-    sb@.currQueue SBQueue.SIZE malloc =
-    sb@.prevQueue SBQueue.SIZE malloc =
+    sb@.currQueue SBQueue.SIZE i64' malloc =
+    sb@.prevQueue SBQueue.SIZE i64' malloc =
     sb@.currQueue@.len 0 =
     sb@.prevQueue@.len 0 =
     sb@.currQueue@.entrys 10 malloc =
@@ -108,17 +112,18 @@ struct SpriteBatch {
     sb@.prevQueue@ free
   }
 
-  def proc draw SpriteBatch* Drawer* : void {
+  def proc draw SpriteBatch* Drawer : void {
     SBQueueEntry entry
-    Drawer* dr
+    Drawer dr
     SpriteBatch* sb
 
     dr swap =
     sb swap =
 
     entry.update true =
-    entry.tex dr@.tex@ =
-    entry.verts dr@ Drawer.genVerts =
+    entry.tex dr.tex@ =
+    entry.shader dr.shader@ =
+    entry.verts dr Drawer.genVerts =
 
     i32 old
 
@@ -127,7 +132,7 @@ struct SpriteBatch {
 
     sb@.currQueue@.entrys
     sb@.currQueue@.entrys@
-    sb@.currQueue@ SBQueue.getSize
+    sb@.currQueue@ SBQueue.getSize i64'
     realloc =
 
     sb@.currQueue@ old@ SBQueue.getEntry entry@ =
@@ -143,10 +148,10 @@ struct SpriteBatch {
       idx 0 =
       do {
         sb@.currQueue@ idx@ SBQueue.getEntry .update true =
+        sb@.currQueue@ idx@ SBQueue.getEntry .hash
+        sb@.currQueue@ idx@ SBQueue.getEntry SBQueueEntry.getHash =
         
         idx @ sb@.prevQueue@.len @ < if {
-          sb@.currQueue@ idx@ SBQueue.getEntry .hash
-          sb@.currQueue@ idx@ SBQueue.getEntry SBQueueEntry.getHash =
           sb@.currQueue@ idx@ SBQueue.getEntry .update
           sb@.currQueue@ idx@ SBQueue.getEntry .hash @
           sb@.prevQueue@ idx@ SBQueue.getEntry .hash @ !=
@@ -166,30 +171,31 @@ struct SpriteBatch {
       target sb@.currQueue@.len@ =
 
       target@ sb@.buffersCount@ < if {
-      "less
-" printf
         sb@.buffersCount@ target@ -
-        sb@.buffers@ target@ i32.SIZE * mem.add
+        sb@.buffers@ target@ i32.SIZE * u64' mem.add
         glDeleteBuffers
       }
 
-      sb@.buffers 
+      sb@.buffers
       sb@.buffers@ 
-      target@ i32.SIZE *
+      target@ i32.SIZE * i64'
       realloc
       =
 
       target@ sb@.buffersCount@ > if {
         target@ sb@.buffersCount@ -
-        sb@.buffers@ sb@.buffersCount@ i32.SIZE * mem.add
+        sb@.buffers@ sb@.buffersCount@ i32.SIZE * u64' mem.add
         glGenBuffers
       }
   
-      sb@.buffersCount target @ =
+      sb@.buffersCount target@ =
     }
 
     SBContext ctx
     SBQueueEntry* entry
+
+    ctx.tex null =
+    ctx.shader null =
 
     sb@.currQueue@.len@ 0 != if {
       idx 0 =
@@ -206,8 +212,17 @@ struct SpriteBatch {
         ctx.tex
         sb@.currQueue@ idx@ SBQueue.getEntry.tex@ =
 
+        ctx@.shader
+        entry@.shader@ != if {
+          entry@.shader@.id@
+          glUseProgram
+        }
+
+        ctx.shader
+        sb@.currQueue@ idx@ SBQueue.getEntry.shader@ =
+
         34962
-        sb@.buffers@ idx@ i32.SIZE * mem.add i32*' @
+        sb@.buffers@ idx@ i32.SIZE * u64' mem.add i32*' @
         glBindBuffer
 
         entry@.update@ entry@.verts@.len@ 0 != && if {
@@ -232,14 +247,14 @@ struct SpriteBatch {
       }
     }
 
-    sb@.prevQueue@.entrys@ free
+    # sb@.prevQueue@.entrys@ free
     sb@.prevQueue@ free
 
     sb@.prevQueue sb@.currQueue@ =
 
-    sb@.currQueue SBQueue.SIZE malloc =
+    sb@.currQueue SBQueue.SIZE i64' malloc =
 
-    sb@.currQueue@.entrys 10 malloc =
+    sb@.currQueue@.entrys null =
     sb@.currQueue@.len 0 =
 
     # todo: free prev queue & swap

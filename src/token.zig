@@ -19,6 +19,7 @@ pub const Token = struct {
         Prop,
         Lambda,
         Error,
+        Global,
         Func,
     };
 

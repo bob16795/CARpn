@@ -1,18 +1,19 @@
 extern proc printf u8$* : void
-extern proc malloc u32 : void*
-extern proc calloc u32 u32 : void*
-extern proc realloc void* u32 : void*
+extern proc malloc u64 : void*
+extern proc calloc u64 u64 : void*
+extern proc realloc void* u64 : void*
 extern proc free void* : void
 extern proc exit u32 : void
+extern proc memcpy void* void* i64 : void
 
 struct mem {
-  def proc cpy u8 []* u8 []* i32 : void {
-    disc disc disc
+  def proc cpy u8$* u8$* i64 : void {
+    memcpy
   }
 
-  def proc eql u8 []* u8 []* i32 : bool {
-      u8 [] * a
-      u8 [] * b
+  def proc eql u8$* u8$* i32 : bool {
+      u8$* a
+      u8$* b
       i32 size
 
       size swap =

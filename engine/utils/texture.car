@@ -12,7 +12,7 @@ struct Texture {
     Image* data
 
     file swap =
-    result Texture.SIZE malloc =
+    result Texture.SIZE i64' malloc =
 
     u32 channels
 
@@ -20,6 +20,8 @@ struct Texture {
 
     1 result@.id glGenTextures
     3553 result@.id@ glBindTexture
+    3553 10241 9728 glTexParameteri
+    3553 10240 9728 glTexParameteri
 
     3553 0 6408 result@.size.x@ result@.size.y@ 0 6408 5121 data@ glTexImage2D
     3553 glGenerateMipmap

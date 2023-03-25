@@ -3,7 +3,7 @@ const llvm = @import("llvm.zig");
 const token = @import("token.zig");
 const allocator = @import("allocator.zig");
 
-var Types: [11]TypeData = undefined;
+var Types: [10]TypeData = undefined;
 var nullValue: ValueData = undefined;
 var trueValue: ValueData = undefined;
 var falseValue: ValueData = undefined;
@@ -33,7 +33,6 @@ pub fn setupNamed() !void {
         .{ .name = "bool", .aType = TheContext.intType(1) },
         .{ .name = "f32", .aType = TheContext.floatType() },
         .{ .name = "type", .aType = null },
-        .{ .name = "anytype", .aType = null },
     };
 
     nullValue = .{
@@ -69,9 +68,6 @@ pub fn setupNamed() !void {
     });
     try named.put("type", .{
         .Type = &Types[9],
-    });
-    try named.put("anytype", .{
-        .Type = &Types[10],
     });
     try named.put("i8", .{
         .Type = &Types[1],
@@ -110,7 +106,6 @@ const FunctionImpl = struct {
     args: []*TypeData,
     rets: ?*TypeData,
     kind: *llvm.Type,
-    name: []const u8,
 };
 
 const FunctionData = struct {
@@ -121,35 +116,6 @@ const FunctionData = struct {
     rets: ?*TypeData,
     name: []const u8,
     impls: []FunctionImpl,
-
-    pub fn getType(self: *FunctionData, args: []*TypeData) !*llvm.Type {
-        for (self.args) |arg, idx| {
-            if (!args[idx].sameType(arg)) {
-                std.log.info("{s}", .{self.name});
-                return error.BadFunctionCall;
-            }
-        }
-
-        var akind: ?*llvm.Type = undefined;
-
-        if (self.rets == null) {
-            akind = TheContext.voidType();
-        } else {
-            akind = self.rets.?.aType;
-            if (akind == null)
-                akind = TheContext.voidType();
-        }
-
-        var argsKinds = try allocator.alloc.alloc(*llvm.Type, args.len);
-
-        for (argsKinds) |_, idx| {
-            argsKinds[idx] = args[idx].aType.?;
-        }
-
-        var functionType = llvm.functionType(akind.?, argsKinds.ptr, @intCast(c_uint, argsKinds.len), .False);
-
-        return functionType;
-    }
 
     pub fn implement(self: *FunctionData, args: []*TypeData) !FunctionImpl {
         for (self.impls) |impl| {
@@ -194,7 +160,6 @@ const FunctionData = struct {
                 .args = self.args,
                 .rets = self.rets,
                 .kind = functionType,
-                .name = self.name,
             };
         }
         var name: []u8 = undefined;
@@ -204,22 +169,17 @@ const FunctionData = struct {
             name = try std.fmt.allocPrint(allocator.alloc, "{s}_{} ", .{ self.name, self.impls.len });
         }
 
-        std.log.info("impl: {s}", .{self.name});
-
         name[name.len - 1] = 0;
 
         var function = llvm.Module.addFunction(TheModule, @ptrCast([*:0]const u8, name), functionType);
 
-        var oldFunc = TheFunction;
         TheFunction = .{
             .val = function,
             .args = args,
             .rets = self.rets,
             .kind = functionType,
-            .name = name,
         };
 
-        var oldBB = Builder.getInsertBlock();
         var bb = TheContext.appendBasicBlock(function, "entry");
         Builder.positionBuilderAtEnd(bb);
 
@@ -247,7 +207,6 @@ const FunctionData = struct {
 
         named = oldNamed;
         locals = oldLocals;
-        TheFunction = oldFunc;
 
         if (values.items.len == 1) {
             var val = try values.items[0].getValue(self.rets.?);
@@ -266,10 +225,7 @@ const FunctionData = struct {
                 .args = args,
                 .rets = self.rets,
                 .kind = functionType,
-                .name = name,
             };
-
-            Builder.positionBuilderAtEnd(oldBB);
 
             return self.impls[idx];
         } else if (values.items.len == 0) {
@@ -288,13 +244,11 @@ const FunctionData = struct {
                 .args = args,
                 .rets = self.rets,
                 .kind = functionType,
-                .name = name,
             };
-
-            Builder.positionBuilderAtEnd(oldBB);
 
             return self.impls[idx];
         }
+
         std.log.info("{s}: {any}, {}", .{ self.name, values.items, values.items.len });
 
         return error.Unknown;
@@ -418,7 +372,6 @@ pub const TypeData = struct {
     }
 
     pub fn sameType(self: *TypeData, other: *TypeData) bool {
-        if (std.mem.eql(u8, self.name, "anytype") or std.mem.eql(u8, other.name, "anytype")) return true;
         if ((self.aType == null) != (other.aType == null)) return false;
         if ((self.data == null) != (other.data == null)) return false;
         if (self.aType == null or self.data == null) return std.mem.eql(u8, self.name, other.name);
@@ -435,7 +388,6 @@ pub const TypeData = struct {
             },
             .Struct => {
                 if (other.data.? != .Struct) return false;
-                if (self.data.?.Struct.len != other.data.?.Struct.len) return false;
                 for (self.data.?.Struct) |*a, idx| {
                     if (!a.kind.sameType(&other.data.?.Struct[idx].kind)) return false;
                 }
@@ -459,7 +411,6 @@ pub const TypeData = struct {
 
 const StackEntryTag = enum {
     Value,
-    //CompValue,
     Function,
     Type,
     Internal,
@@ -467,7 +418,6 @@ const StackEntryTag = enum {
 
 pub const StackEntry = union(StackEntryTag) {
     Value: *ValueData,
-    //CompValue: *ValueData,
     Function: *FunctionData,
     Type: *TypeData,
     Internal: *InternalData,
@@ -1093,7 +1043,7 @@ pub const FuncTypeAST = struct {
         var kind = try allocator.alloc.create(TypeData);
         var fnKind = try allocator.alloc.create(TypeData);
         fnKind.* = .{
-            .aType = try function.getType(function.args),
+            .aType = null,
             .name = "func",
             .data = .{
                 .Function = .{
@@ -1217,10 +1167,6 @@ pub const PropExprAST = struct {
 
         switch (value) {
             .Value => |val| {
-                if (std.mem.eql(u8, self.name, "TYPE")) {
-                    try values.append(.{ .Type = &val.kind });
-                    return;
-                }
                 var kind: *TypeData = &val.kind;
                 if (kind.data != null and kind.data.? == .Pointer) {
                     kind = kind.data.?.Pointer;
@@ -2126,6 +2072,8 @@ pub const IdentExprAST = struct {
 
             var adds = try allocator.alloc.create(ValueData);
 
+            std.log.info("{s}", .{self.value});
+
             adds.value = Builder.buildCall(func.kind, func.val, params.ptr, @intCast(c_uint, params.len), "calltmp");
 
             if (func.rets != null) {
@@ -2291,15 +2239,9 @@ pub const PrototypeAST = struct {
         }
 
         var input = try allocator.alloc.alloc(*llvm.Type, argsTypes.items.len);
-        var generic: bool = false;
 
         for (argsTypes.items) |item, idx| {
-            if (item.kind.aType) |aType| {
-                input[idx] = aType;
-            } else {
-                generic = true;
-                break;
-            }
+            input[idx] = item.kind.aType.?;
         }
 
         var kind = retsTypes.items[0].kind.aType;
@@ -2309,30 +2251,20 @@ pub const PrototypeAST = struct {
             akind = TheContext.voidType();
         }
 
+        var functionType = llvm.functionType(akind.?, @ptrCast([*]const *llvm.Type, input), @intCast(c_uint, input.len), .False);
+
+        var function = llvm.Module.addFunction(TheModule, @ptrCast([*:0]const u8, self.name), functionType);
+
         var data = try allocator.alloc.create(FunctionData);
+        data.* = .{
+            .name = self.name,
+            .ext = function,
+            .body = null,
+            .rets = null,
+            .args = try allocator.alloc.alloc(*TypeData, input.len),
+            .impls = try allocator.alloc.alloc(FunctionImpl, 0),
+        };
 
-        if (!generic) {
-            var functionType = llvm.functionType(akind.?, @ptrCast([*]const *llvm.Type, input), @intCast(c_uint, input.len), .False);
-
-            var function = llvm.Module.addFunction(TheModule, @ptrCast([*:0]const u8, self.name), functionType);
-            data.* = .{
-                .name = self.name,
-                .ext = function,
-                .body = null,
-                .rets = null,
-                .args = try allocator.alloc.alloc(*TypeData, input.len),
-                .impls = try allocator.alloc.alloc(FunctionImpl, 0),
-            };
-        } else {
-            data.* = .{
-                .name = self.name,
-                .ext = null,
-                .body = null,
-                .rets = null,
-                .args = try allocator.alloc.alloc(*TypeData, input.len),
-                .impls = try allocator.alloc.alloc(FunctionImpl, 0),
-            };
-        }
         for (data.args) |_, idx| {
             data.args[idx] = try allocator.alloc.create(TypeData);
             data.args[idx].* = argsTypes.items[idx].kind;
@@ -2358,10 +2290,9 @@ pub const DefinitionAST = struct {
 
     pub fn codegen(self: *Self) !void {
         var function = try self.proto.codegen();
-        if (function.ext != null) {
-            function.ext.?.deleteFunction();
-            function.ext = null;
-        }
+
+        function.ext.?.deleteFunction();
+        function.ext = null;
 
         function.body = self.body;
 

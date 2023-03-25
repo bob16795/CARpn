@@ -1,9 +1,9 @@
-def proc getShaders : ShaderFile$* {
+def proc getTexShaders : ShaderFile$* {
   ShaderFile$* result
 
-  result ShaderFile.SIZE 2 calloc =
+  result ShaderFile.SIZE i64' 2 calloc =
 
-  result@[0].contents u8$*$*.SIZE 1 calloc =
+  result@[0].contents u8$*$*.SIZE i64' 1 calloc =
   result@[0].kind 35633 =
   result@[0].count 1 =
   result@[0].contents@ u8$**'
@@ -21,7 +21,7 @@ void main()
     tintColor = aColor;
 }" =
 
-  result@[1].contents u8$*$*.SIZE 1 calloc =
+  result@[1].contents u8$*$*.SIZE i64' 1 calloc =
   result@[1].kind 35632 =
   result@[1].count 1 =
   result@[1].contents@ u8$**'
@@ -41,70 +41,136 @@ void main() {
   result@
 }
 
+def proc getPixShaders : ShaderFile$* {
+  ShaderFile$* result
+
+  result ShaderFile.SIZE i64' 2 calloc =
+
+  result@[0].contents u8$*$*.SIZE i64' 1 calloc =
+  result@[0].kind 35633 =
+  result@[0].count 1 =
+  result@[0].contents@ u8$**'
+  "#version 330 core
+layout (location = 0) in vec3 aVertex;
+layout (location = 1) in vec2 aTexCoords;
+layout (location = 2) in vec4 aColor;
+uniform mat4 projection;
+out vec2 texCoords;
+out vec4 tintColor;
+void main()
+{
+    gl_Position = projection * vec4(aVertex.xyz, 1.0);
+    texCoords = aTexCoords;
+    tintColor = aColor;
+}" =
+
+  result@[1].contents u8$*$*.SIZE i64' 1 calloc =
+  result@[1].kind 35632 =
+  result@[1].count 1 =
+  result@[1].contents@ u8$**'
+  "#version 330 core
+
+in vec2 texCoords;
+in vec4 tintColor;
+
+out vec4 color;
+
+uniform sampler2D tex;
+
+void main() {
+     color = tintColor;
+}" =
+
+  result@
+}
+
+extern proc getTimeFloat : f32
+
 def proc main : i32 {
   SpriteBatch sb
   Drawer drawer
-  Sprite sprite
   GFXContext* ctx
-  Shader* shd
-  Texture* tex
+  Shader* [2] shd
 
   ctx GFXContext.init =
+  ctx@ Input.init
 
-  shd getShaders 2 Shader.new =
-  tex "lol.png" Texture.new =
+  shd [0] getTexShaders 2 Shader.new =
+  shd [1] getPixShaders 2 Shader.new =
 
-  shd@ 640.0 480.0 Vec2.new Shader.setSize
-
-  drawer.self sprite =
-  drawer.getVerts (Sprite.getVerts) =
-  drawer.tex tex@ =
+  shd [0] @ Shader*' 640.0 480.0 Vec2.new Shader.setSize
+  shd [1] @ Shader*' 640.0 480.0 Vec2.new Shader.setSize
 
   sb SpriteBatch.init
 
-  sprite.size.x 100.0 =
-  sprite.size.y 40.0 =
+  # start game loop
 
-  sprite.pos.x 100.0 =
-  sprite.pos.y 100.0 =
+  f32 t
+  f32 dt
+  f32 currentTime
+  f32 accumulator
 
-  Vec2 vel
+  t 0.0 =
+  dt 0.04 =
 
-  vel.x -1.0 =
-  vel.y -1.0 =
+  currentTime getTimeFloat =
+  accumulator 0.0 =
+
+  GameState currState
+  GameState prevState
+
+  currState shd@ GameState.init =
+  prevState currState@ =
+
+  3089 glEnable
 
   do {
-    sb drawer SpriteBatch.draw
+    # update
+    f32 newTime
+    f32 frameTime
+    
+    newTime getTimeFloat =
+    frameTime newTime@ currentTime@ - =
+
+    frameTime@ 0.25 > if {
+      frameTime 0.25 =
+    }
+
+    currentTime newTime@ =
+    accumulator accumulator@ frameTime@ + =
+
+    # update loop
+    accumulator@ dt@ < ! if {
+      do {
+        prevState@ GameState.free
+        prevState currState@ GameState.copy =
+        currState t@ dt@ GameState.update
+
+        t t@ dt@ + =
+        accumulator accumulator@ dt@ - =
+
+        accumulator@ dt@ < !
+      }
+    }
+
+    # draw
+    GameState state
+    f32 alpha
+
+    alpha accumulator@ dt@ / =
+
+    state prevState@ currState@ alpha@ GameState.lerp
+
+    state sb GameState.draw
 
     ctx@ GFXContext.clear
-    shd@.id@ glUseProgram
     sb SpriteBatch.finish
     ctx@ GFXContext.swap
-      
-    sprite.pos.x sprite.pos.x@ vel@.x + =
-    sprite.pos.y sprite.pos.y@ vel@.y + =
-
-    sprite@.pos.x 0.0 < if {
-      vel.x vel.x@ -1.0 * =
-    }
-    sprite@.pos.y 0.0 < if {
-      vel.y vel.y@ -1.0 * =
-    }
-
-    sprite@.pos.x 540.0 > if {
-      vel.x vel.x@ -1.0 * =
-    }
-    sprite@.pos.y 440.0 > if {
-      vel.y vel.y@ -1.0 * =
-    }
-
     ctx@ GFXContext.poll
   }
 
   sb SpriteBatch.deinit
   ctx@ GFXContext.free
-
-  "done" printf
 
   0
 }

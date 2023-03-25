@@ -52,6 +52,7 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (std.mem.eql(u8, name, "lambda")) appends.type = .Lambda;
             if (std.mem.eql(u8, name, "fntype")) appends.type = .Func;
             if (std.mem.eql(u8, name, "err")) appends.type = .Error;
+            if (std.mem.eql(u8, name, "global")) appends.type = .Global;
 
             name = try allocator.alloc.realloc(name, name.len + 1);
             name[name.len - 1] = 0;
@@ -232,84 +233,7 @@ pub fn main() !void {
     parser.TheContext = llvm.Context.create();
     parser.TheModule = llvm.Module.createWithName("Context", parser.TheContext);
     parser.Builder = parser.TheContext.createBuilder();
-
-    parser.named = std.StringHashMap(parser.StackEntry).init(allocator.alloc);
-    parser.locals = std.ArrayList([]const u8).init(allocator.alloc);
-
-    var Types: [9]parser.TypeData = undefined;
-    Types = [_]parser.TypeData{
-        .{ .name = "void", .aType = null },
-        .{ .name = "i8", .aType = parser.TheContext.intType(8) },
-        .{ .name = "i16", .aType = parser.TheContext.intType(16) },
-        .{ .name = "i32", .aType = parser.TheContext.intType(32) },
-        .{ .name = "i64", .aType = parser.TheContext.intType(64) },
-        .{ .name = "f64", .aType = parser.TheContext.doubleType() },
-        .{ .name = "ptr", .aType = parser.TheContext.pointerType(5), .data = .{ .Pointer = &Types[0] } },
-        .{ .name = "bool", .aType = parser.TheContext.intType(1) },
-        .{ .name = "f32", .aType = parser.TheContext.floatType() },
-    };
-
-    var nullValue: parser.ValueData = .{
-        .kind = Types[6],
-        .value = llvm.Type.constInt(parser.TheContext.intType(64), 0, .False),
-    };
-
-    var falseValue: parser.ValueData = .{
-        .kind = Types[7],
-        .value = llvm.Type.constInt(parser.TheContext.intType(1), 0, .False),
-    };
-
-    var trueValue: parser.ValueData = .{
-        .kind = Types[7],
-        .value = llvm.Type.constInt(parser.TheContext.intType(1), 1, .False),
-    };
-
-    try parser.named.put("null", .{
-        .Value = &nullValue,
-    });
-    try parser.named.put("false", .{
-        .Value = &falseValue,
-    });
-    try parser.named.put("true", .{
-        .Value = &trueValue,
-    });
-
-    try parser.named.put("void", .{
-        .Type = &Types[0],
-    });
-    try parser.named.put("bool", .{
-        .Type = &Types[7],
-    });
-    try parser.named.put("i8", .{
-        .Type = &Types[1],
-    });
-    try parser.named.put("i16", .{
-        .Type = &Types[2],
-    });
-    try parser.named.put("i32", .{
-        .Type = &Types[3],
-    });
-    try parser.named.put("i64", .{
-        .Type = &Types[4],
-    });
-    try parser.named.put("u8", .{
-        .Type = &Types[1],
-    });
-    try parser.named.put("u16", .{
-        .Type = &Types[2],
-    });
-    try parser.named.put("u32", .{
-        .Type = &Types[3],
-    });
-    try parser.named.put("u64", .{
-        .Type = &Types[4],
-    });
-    try parser.named.put("f32", .{
-        .Type = &Types[8],
-    });
-    try parser.named.put("f64", .{
-        .Type = &Types[5],
-    });
+    try parser.setupNamed();
 
     var args = try std.process.ArgIterator.initWithAllocator(allocator.alloc);
 
@@ -338,26 +262,34 @@ pub fn main() !void {
                     var str = try parser.StructAST.parse(&toks);
                     _ = try str.codegen();
                 },
+                .Global => {
+                    var str = try parser.GlobalAST.parse(&toks);
+                    _ = try str.codegen();
+                },
                 else => {
                     std.log.info("{s}", .{toks.items[0].value});
                     return error.BadToken;
                 },
             }
         }
-        var str = parser.TheModule.printToString();
-
-        var file = try std.fs.cwd().createFile("tmp", .{});
-
-        var writing: []const u8 = undefined;
-        writing.ptr = @ptrCast([*]const u8, str);
-        writing.len = 1;
-        while (writing[writing.len - 1] != 0) writing.len += 1;
-        writing.len -= 1;
-
-        _ = try file.write(writing);
-
-        file.close();
     }
+
+    var values = parser.ValueStack.init(allocator.alloc);
+
+    _ = try parser.getFunction("main", &values);
+    var str = parser.TheModule.printToString();
+
+    var file = try std.fs.cwd().createFile("tmp", .{});
+
+    var writing: []const u8 = undefined;
+    writing.ptr = @ptrCast([*]const u8, str);
+    writing.len = 1;
+    while (writing[writing.len - 1] != 0) writing.len += 1;
+    writing.len -= 1;
+
+    _ = try file.write(writing);
+
+    file.close();
 
     std.log.info("LLVM lol.o", .{});
 

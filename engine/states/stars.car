@@ -1,0 +1,171 @@
+extern proc setuprand : void
+extern proc randf : f32
+
+struct Star {
+  f32 spd
+  bool tp
+  Vec2 pos
+  Color c
+}
+
+struct Stars {
+  u32 buffer
+  Star [100] stars
+  Drawer drawer
+
+  def proc update Stars* : void {
+    Stars* self
+
+    self swap =
+
+    i32 idx
+    idx 0 =
+    do {
+      Star* current
+
+      current self@.stars idx@ Star.SIZE * i64' mem.add =
+      current@.pos.y copy@ current@.spd@ 2.0 * + =
+
+      current@.pos.y@ 480.0 > if {
+        current@.pos.y -10.0 =
+        current@.pos.x randf 640.0 * =
+        current@.spd randf 10.0 * 3.0 + =
+        current@.tp current@.tp@ false == =
+      }
+
+      idx copy@ 1 + =
+      idx@ 100 <
+    }
+  }
+
+  def proc getVerts void* : Verts* {
+    Stars* self
+    Verts* toDraw
+
+    self swap =
+
+    toDraw Verts.SIZE i64' malloc =
+    toDraw@.verts Vert.SIZE i64' 600 calloc =
+    toDraw@.len 600 =
+
+    i32 idx
+    idx 0 =
+    do {
+      Vert [6] * editing
+      Star* current
+
+      editing toDraw@.verts@ idx@ Vert.SIZE 6 * * i64' mem.add =
+      current self@.stars idx@ Star.SIZE * i64' mem.add =
+
+      editing@ [0] .x current@.pos.x@ 3.0 + =
+      editing@ [0] .y current@.pos.y@ current@.spd@ 3.0 * + =
+      editing@ [0] .r current@.c.r@ =
+      editing@ [0] .g current@.c.g@ =
+      editing@ [0] .b current@.c.b@ =
+      editing@ [0] .a 1.0 =
+      editing@ [1] .x current@.pos.x@ =
+      editing@ [1] .y current@.pos.y@ =
+      editing@ [1] .a 0.0 =
+      editing@ [1] .r current@.c.r@ =
+      editing@ [1] .g current@.c.g@ =
+      editing@ [1] .b current@.c.b@ =
+      editing@ [2] .x current@.pos.x@ 3.0 + =
+      editing@ [2] .y current@.pos.y@ =
+      editing@ [2] .a 0.0 =
+      editing@ [2] .r current@.c.r@ =
+      editing@ [2] .g current@.c.g@ =
+      editing@ [2] .b current@.c.b@ =
+
+      editing@ [3] .x current@.pos.x@ 3.0 + =
+      editing@ [3] .y current@.pos.y@ current@.spd@ 3.0 * + =
+      editing@ [3] .a 1.0 =
+      editing@ [3] .r current@.c.r@ =
+      editing@ [3] .g current@.c.g@ =
+      editing@ [3] .b current@.c.b@ =
+      editing@ [4] .x current@.pos.x@ =
+      editing@ [4] .y current@.pos.y@ =
+      editing@ [4] .a 0.0 =
+      editing@ [4] .r current@.c.r@ =
+      editing@ [4] .g current@.c.g@ =
+      editing@ [4] .b current@.c.b@ =
+      editing@ [5] .x current@.pos.x@ =
+      editing@ [5] .y current@.pos.y@ current@.spd@ 3.0 * + =
+      editing@ [5] .a 1.0 =
+      editing@ [5] .r current@.c.r@ =
+      editing@ [5] .g current@.c.g@ =
+      editing@ [5] .b current@.c.b@ =
+
+      idx copy@ 1 + =
+      idx@ 100 <
+    }
+
+    toDraw@
+  }
+
+  def proc lerp Stars* Stars Stars f32 : void {
+    Stars result
+    Stars a
+    Stars b
+    f32 pc
+
+    pc swap =
+    a swap =
+    b covr =
+    result swap =
+
+    i32 idx
+    idx 0 =
+    do {
+      Star* currenta
+      currenta a.stars idx@ Star.SIZE * i64' mem.add =
+      Star* currentb
+      currentb b.stars idx@ Star.SIZE * i64' mem.add =
+      Star* curres
+      curres result.stars idx@ Star.SIZE * i64' mem.add =
+
+      currenta@.tp@ currentb@.tp@ == if {
+        curres@.pos currenta@.pos@ currentb@.pos@ pc@ Vec2.lerp =
+      }
+
+      idx copy@ 1 + =
+      idx@ 100 <
+    }
+
+    result@ =
+  }
+
+  def proc init Shader* : Stars {
+    Shader* shader
+
+    shader swap =
+
+    Stars result
+
+    setuprand
+
+    i32 idx
+    idx 0 =
+    do {
+      result.stars idx@ Star.SIZE * i64' mem.add Star*' .pos randf 640.0 * randf 480.0 * Vec2.new =
+      result.stars idx@ Star.SIZE * i64' mem.add Star*' .spd randf 10.0 * 3.0 + =
+
+      result.stars idx@ Star.SIZE * i64' mem.add Star*' .c
+      0.6 0.7 0.0 1.0 Color.new
+      1.0 0.0 0.0 1.0 Color.new
+      randf Color.mix
+      1.0 1.0 1.0 1.0 Color.new
+      randf Color.mix =
+
+      idx copy@ 1 + =
+      idx@ 100 <
+    }
+
+    1 result.buffer glGenBuffers
+
+    result.drawer.getVerts (Stars.getVerts) =
+    result.drawer.shader shader@ =
+
+    result@
+  }
+
+}

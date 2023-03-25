@@ -1,0 +1,60 @@
+global inputInstance void*
+
+struct Input {
+  Vec2 dir
+  bool shoot
+
+  def proc instance : Input* {
+    inputInstance@ Input*'
+  }
+
+  def proc keyCallback Win* i32 i32 i32 i32 : void {
+    i32 action
+    i32 key
+
+    disc # mods
+    action swap =
+    disc # scancode
+    key swap =
+    disc # window
+
+    Vec2 adds
+
+    adds.x 0.0 =
+    adds.y 0.0 =
+
+    key@ 263 == if { adds.x -1.0 = }
+    key@ 262 == if { adds.x 1.0 = }
+    key@ 265 == if { adds.y -1.0 = }
+    key@ 264 == if { adds.y 1.0 = }
+
+    key@ 65 == if { adds.x -1.0 = }
+    key@ 68 == if { adds.x 1.0 = }
+    key@ 87 == if { adds.y -1.0 = }
+    key@ 83 == if { adds.y 1.0 = }
+
+    action@ 0 == if {
+      Input.instance.dir Input.instance.dir@ adds@ -1.0 Vec2.mul Vec2.add =
+
+      key@ 32 == if {
+        Input.instance.shoot false =
+      }
+    }
+    action@ 1 == if {
+      Input.instance.dir Input.instance.dir@ adds@ Vec2.add =
+
+      key@ 32 == if {
+        Input.instance.shoot true =
+      }
+    }
+  }
+
+  def proc init GFXContext* : void {
+    inputInstance Input.SIZE i64' malloc =
+
+    Input.instance.dir.y 0.0 =
+    Input.instance.dir.x 0.0 =
+
+    .win@ (Input.keyCallback) glfwSetKeyCallback
+  }
+}

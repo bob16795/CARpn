@@ -1,9 +1,12 @@
-struct Sprite {
+struct MultiSprite {
   Vec2 size
   Vec2 pos
 
+  Vec2 grid
+  Vec2 current
+
   def proc getVerts void* : Verts* {
-    Sprite* self
+    MultiSprite* self
 
     self swap =
 
@@ -13,45 +16,54 @@ struct Sprite {
     v@.verts Vert.SIZE i64' 6 calloc =
     v@.len 6 =
 
+    Rect uv
+
+    uv
+    1.0 self@.grid.x@ / self@.current@.x *
+    1.0 self@.grid.y@ / self@.current@.y *
+    1.0 self@.grid.x@ /
+    1.0 self@.grid.y@ /
+    Rect.new =
+
     v@.verts@ [0].x self@.pos.x@ =
     v@.verts@ [0].y self@.pos.y@ =
     v@.verts@ [0].z 0.0 =
-    v@.verts@ [0].u 0.0 =
-    v@.verts@ [0].v 0.0 =
+    v@.verts@ [0].u uv.x@ =
+    v@.verts@ [0].v uv.y@ =
     v@.verts@ [1].x self@.pos.x@ self@.size.x@ + =
     v@.verts@ [1].y self@.pos.y@ self@.size.y@ + =
     v@.verts@ [1].z 0.0 =
-    v@.verts@ [1].u 1.0 =
-    v@.verts@ [1].v 1.0 =
+    v@.verts@ [1].u uv.x@ uv.w@ + =
+    v@.verts@ [1].v uv.y@ uv.h@ + =
     v@.verts@ [2].x self@.pos.x@ =
     v@.verts@ [2].y self@.pos.y@ self@.size.y@ + =
     v@.verts@ [2].z 0.0 =
-    v@.verts@ [2].u 0.0 =
-    v@.verts@ [2].v 1.0 =
+    v@.verts@ [2].u uv.x@ =
+    v@.verts@ [2].v uv.y@ uv.h@ + =
 
     v@.verts@ [3].x self@.pos.x@ =
     v@.verts@ [3].y self@.pos.y@ =
     v@.verts@ [3].z 0.0 =
-    v@.verts@ [3].u 0.0 =
-    v@.verts@ [3].v 0.0 =
+    v@.verts@ [3].u uv.x@ =
+    v@.verts@ [3].v uv.y@ =
     v@.verts@ [4].x self@.pos.x@ self@.size.x@ + =
     v@.verts@ [4].y self@.pos.y@ self@.size.y@ + =
     v@.verts@ [4].z 0.0 =
-    v@.verts@ [4].u 1.0 =
-    v@.verts@ [4].v 1.0 =
+    v@.verts@ [4].u uv.x@ uv.w@ + =
+    v@.verts@ [4].v uv.y@ uv.h@ + =
     v@.verts@ [5].x self@.pos.x@ self@.size.x@ + =
     v@.verts@ [5].y self@.pos.y@ =
     v@.verts@ [5].z 0.0 =
-    v@.verts@ [5].u 1.0 =
-    v@.verts@ [5].v 0.0 =
+    v@.verts@ [5].u uv.x@ uv.w@ + =
+    v@.verts@ [5].v uv.y@ =
 
     v@
   }
 
-  def proc lerp Sprite* Sprite Sprite f32 : void {
-    Sprite result
-    Sprite a
-    Sprite b
+  def proc lerp MultiSprite* MultiSprite MultiSprite f32 : void {
+    MultiSprite result
+    MultiSprite a
+    MultiSprite b
     f32 pc
 
     pc swap =

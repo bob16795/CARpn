@@ -1,0 +1,210 @@
+struct CollisionResult {
+  bool success
+  Vec2 contact_norm
+  Vec2 contact_point
+  f32 contact_time
+  f32 exit_time
+}
+
+struct CollisionData {
+  bool collision
+  Vec2 norm
+  f32 dist
+  f32 exit
+}
+
+extern proc printfloat f32 : void
+
+def proc abs f32 : f32 {
+  copy 0.0 < if {
+    -1.0 *
+  }
+}
+
+struct CollisionRect {
+  Rect bounds
+  u8 target
+
+  def proc rayVsRect Vec2 Vec2 CollisionRect : CollisionResult {
+    CollisionRect target
+    Vec2 dir
+    Vec2 start
+    CollisionResult result
+
+    target swap =
+    dir swap =
+    start swap =
+
+    Vec2 near
+    Vec2 far
+
+    near.x target.bounds.x@ start.x@ - dir.x@ / =
+    near.y target.bounds.y@ start.y@ - dir.y@ / =
+
+    far.x target.bounds.x@ target.bounds.w@ + start.x@ - dir.x@ / =
+    far.y target.bounds.y@ target.bounds.h@ + start.y@ - dir.y@ / =
+
+    dir.x@ 0.0 == target.bounds.x@ target.bounds.w@ + start.x@ - abs 0.0 < && if {
+      near.x 0.0 =
+      far.x 0.0 =
+    }
+
+    dir.y@ 0.0 == target.bounds.y@ target.bounds.h@ + start.y@ - abs 0.0 < && if {
+      near.y 0.0 =
+      far.y 0.0 =
+    }
+
+    f32 swp
+
+    near.x@ far.x@ > if {
+      swp near.x@ =
+      near.x far.x@ =
+      far.x swp@ =
+    }
+
+    near.y@ far.y@ > if {
+      swp near.y@ =
+      near.y far.y@ =
+      far.y swp@ =
+    }
+
+    near.x@ far.y@ > near.y@ far.x@ > || if {
+      result.success false =
+      result.contact_norm 0.0 0.0 Vec2.new =
+      result.contact_point 0.0 0.0 Vec2.new =
+      result.contact_time 0.0 =
+      result.exit_time 0.0 =
+
+      result@ ret
+    }
+
+    f32 t_hit_near
+    f32 t_hit_far
+
+    t_hit_near near.x@ =
+    near.y@ near.x@ > if {
+      t_hit_near near.y@ =
+    }
+
+    t_hit_far far.x@ =
+    far.y@ far.x@ < if {
+      t_hit_far far.y@ =
+    }
+
+    t_hit_far@ 0.0 < if {
+      result.success false =
+      result.contact_norm 0.0 0.0 Vec2.new =
+      result.contact_point 0.0 0.0 Vec2.new =
+      result.contact_time 0.0 =
+      result.exit_time 0.0 =
+
+      result@ ret
+    }
+
+    Vec2 contact_point
+    Vec2 contact_normal
+
+    contact_point start@ dir@ t_hit_near@ Vec2.mul Vec2.add =
+
+    contact_normal 0.0 -1.0 Vec2.new =
+    dir.y@ 0.0 < if {
+      contact_normal 0.0 1.0 Vec2.new =
+    }
+    near.x@ near.y@ > if {
+      contact_normal -1.0 0.0 Vec2.new =
+      dir.x@ 0.0 < if {
+         contact_normal 1.0 0.0 Vec2.new =
+      }
+    }
+
+    result.success true =
+    result.contact_norm contact_normal@ =
+    result.contact_point contact_point@ =
+    result.contact_time t_hit_near@ =
+    result.exit_time t_hit_far@ =
+
+    result@
+  }
+
+  def proc dynamicRectVsRect CollisionRect Rect Vec2 f32 : CollisionData {
+    f32 time
+    Vec2 vel
+    Rect static
+    CollisionRect dynamic
+
+    CollisionData result
+
+    time swap =
+    vel swap =
+    static swap =
+    dynamic swap =
+
+    vel.x@ 0.0 == vel.y@ 0.0 == && time@ 0.0 == || if {
+      result.collision false =
+      result.norm 0.0 0.0 Vec2.new =
+      result.dist 0.0 =
+      result.exit 0.0 =
+
+      result@ ret
+    }
+
+    Vec2 halfSize
+    CollisionRect tmpStatic
+
+    halfSize dynamic.bounds.w@ 2.0 / dynamic.bounds.h@ 2.0 / Vec2.new =
+    tmpStatic.bounds
+    static.x@ halfSize.x@ -
+    static.y@ halfSize.y@ -
+    static.w@ dynamic.bounds.w@ +
+    static.h@ dynamic.bounds.h@ +
+    Rect.new =
+
+    CollisionResult r
+
+    r dynamic.bounds@ Rect.location halfSize@ Vec2.add vel@ time@ Vec2.mul tmpStatic@ CollisionRect.rayVsRect =
+
+    r.success@ r.contact_time@ -0.001 > && r.contact_time@ 1.0 < && if {
+      result.collision true =
+      result.norm r.contact_norm@ =
+      result.dist r.contact_time@ =
+      result.exit r.exit_time@ =
+
+      result@ ret
+    }
+
+    result.collision false =
+    result.norm 0.0 0.0 Vec2.new =
+    result.dist 0.0 =
+    result.exit 0.0 =
+
+    result@
+  }
+
+  def proc resolveCollision Vec2 CollisionRect Rect f32 : Vec2 {
+    f32 time
+    Rect static
+    CollisionRect dynamic
+    Vec2 vel
+
+    time swap =
+    static swap =
+    dynamic swap =
+    vel swap =
+
+    CollisionData r
+
+    r dynamic@ static@ vel@ time@ CollisionRect.dynamicRectVsRect =
+
+    r.collision@ if {
+      r.norm.x@ vel.x@ abs *
+      r.norm.y@ vel.y@ abs *
+      Vec2.new
+      1.0 r.dist@ -
+      Vec2.mul
+
+      ret
+    }
+
+    0.0 0.0 Vec2.new
+  }
+}

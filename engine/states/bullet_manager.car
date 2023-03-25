@@ -1,0 +1,196 @@
+struct Bullet {
+  Sprite sprite
+  Drawer drawer
+  bool friendly
+  Vec2 vel
+
+  def proc draw Bullet SpriteBatch* Texture* Shader* : void {
+    Bullet self
+    SpriteBatch* sb
+    Texture* tex
+    Shader* shd
+
+    shd swap =
+    tex swap =
+    sb swap =
+    self swap =
+
+    self.drawer.self self.sprite =
+    self.drawer.shader shd@ =
+    self.drawer.tex tex@ =
+    self.drawer.getVerts (Sprite.getVerts) =
+    sb@ self.drawer@ SpriteBatch.draw
+  }
+
+  def proc update Bullet* f32 f32 : void {
+    f32 dt
+    f32 t
+    Bullet* self
+
+    dt swap =
+    t swap =
+    self swap =
+
+    self@.sprite.pos copy@ self@.vel@ dt@ Vec2.mul Vec2.add =
+  }
+
+  def proc lerp Bullet* Bullet Bullet f32 : void {
+    Bullet result
+    Bullet a
+    Bullet b
+    f32 pc
+
+    pc swap =
+    a swap =
+    b covr =
+    result swap =
+
+    result.sprite a@.sprite b@.sprite pc@ Sprite.lerp
+
+    result@ =
+  }
+}
+
+struct BulletManager {
+  Bullet$* bullets
+  i32 bulletCount
+
+  Texture* tex
+  Shader* shd
+
+  def proc new Texture* Shader* : BulletManager {
+    BulletManager result
+
+    result.bulletCount 0 =
+    result.bullets 10 malloc =
+
+    result.shd swap =
+    result.tex swap =
+
+    result@
+  }
+
+  def proc spawn BulletManager* bool Vec2 : void {
+    BulletManager* self
+    i32 idx
+    Vec2 pos
+
+    pos swap =
+    swap
+    self swap =
+
+    idx self@.bulletCount@ =
+
+    self@.bullets
+    self@.bullets@
+    idx@ 1 + Bullet.SIZE * i64'
+    realloc =
+
+    self@.bulletCount idx@ 1 + =
+
+    Bullet* added
+
+    added self@.bullets@ idx@ Bullet.SIZE * i64' mem.add =
+
+    added@.friendly swap =
+    added@.sprite.size.x 16.0 =
+    added@.sprite.size.y 16.0 =
+    added@.sprite.pos.x pos.x@ 8.0 - =
+    added@.sprite.pos.y pos.y@ 8.0 - =
+    added@.vel.x 0.0 =
+    added@.vel.y -500.0 =
+  }
+
+  def proc update BulletManager* f32 f32 : void {
+    BulletManager* self
+    f32 dt
+    f32 t
+
+    dt swap =
+    t swap =
+    self swap =
+
+    i32 idx
+
+    idx 0 =
+    idx@ self@.bulletCount@ < if {
+      do {
+        self@.bullets@ idx@ Bullet.SIZE * i64' mem.add t@ dt@ Bullet.update
+
+        idx idx@ 1 + =
+        idx@ self@.bulletCount@ <
+      }
+    }
+  }
+
+  def proc draw BulletManager* SpriteBatch* : void {
+    BulletManager* self
+    SpriteBatch* sb
+
+    sb swap =
+    self swap =
+
+    i32 idx
+    idx 0 =
+    idx@ self@.bulletCount@ < if {
+      do {
+        self@.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'@ sb@ self@.tex@ self@.shd@ Bullet.draw
+
+        idx idx@ 1 + =
+        idx@ self@.bulletCount@ <
+      }
+    }
+  }
+
+  def proc copy BulletManager : BulletManager {
+    BulletManager result
+    BulletManager input
+
+    input swap =
+
+    result.bulletCount input.bulletCount@ =
+    result.bullets input.bulletCount@ Bullet.SIZE * i64' malloc =
+    result.shd input.shd@ =
+    result.tex input.tex@ =
+
+    result.bullets@
+    input.bullets@
+    input.bulletCount@ Bullet.SIZE * i64'
+    memcpy
+
+    result@
+  }
+
+  def proc lerp BulletManager* BulletManager BulletManager f32 : void {
+    BulletManager result
+    BulletManager a
+    BulletManager b
+    f32 pc
+
+    pc swap =
+    a swap =
+    b covr =
+    result swap BulletManager.copy =
+
+    i32 idx
+    idx 0 =
+    idx@ a.bulletCount@ < if {
+      do {
+        result.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'
+        a.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'@
+        b.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'@
+        pc@
+        Bullet.lerp
+
+        idx idx@ 1 + =
+        idx@ a.bulletCount@ <
+      }
+    }
+
+    result@ =
+  }
+
+  def proc free BulletManager : void {
+    .bullets free
+  }
+}

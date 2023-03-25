@@ -10,6 +10,62 @@ struct Vec2 {
 
     result @
   }
+
+  def proc mul Vec2 f32 : Vec2 {
+    Vec2 result
+
+    covr.x covr * result.x swap =
+    covr.y covr * result.y swap =
+    disc disc
+
+    result @
+  }
+
+  def proc add Vec2 Vec2 : Vec2 {
+    Vec2 result
+
+    covr.x covr.x + result.x swap =
+    covr.y covr.y + result.y swap =
+    disc disc
+
+    result @
+  }
+
+  def proc lerp Vec2 Vec2 f32 : Vec2 {
+    f32 pc
+
+    pc swap =
+
+    pc@ Vec2.mul swap 1.0 pc@ - Vec2.mul Vec2.add
+  }
+}
+
+struct Rect {
+  f32 x
+  f32 y
+  f32 w
+  f32 h
+
+  def proc new f32 f32 f32 f32 : Rect {
+    Rect result
+
+    result.h swap =
+    result.w swap =
+    result.y swap =
+    result.x swap =
+
+    result@
+  }
+
+  def proc location Rect : Vec2 {
+    Vec2 result
+
+    result.x covr.x =
+    result.y covr.y =
+    disc
+
+    result@
+  }
 }
 
 extern proc sqrt f32 : f32

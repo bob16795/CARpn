@@ -14,7 +14,7 @@ struct Hash {
     result 5381 =
 
     do {
-      c str@ idx@ mem.add u8*' @ i64' =
+      c str@ idx@ u64' mem.add u8*' @ i64' =
 
       result result@ 5 << result@ + c@ + =
 

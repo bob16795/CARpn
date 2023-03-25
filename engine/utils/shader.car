@@ -15,7 +15,7 @@ struct Shader {
     count swap =
     files swap =
 
-    result Shader.SIZE malloc =
+    result Shader.SIZE i64' malloc =
     result@.id glCreateProgram =
 
     count @ 0 == if { null ret }
@@ -37,15 +37,15 @@ struct Shader {
     result @
   }
 
-  def proc setSize Vec2 Shader* : void {
+  def proc setSize Shader* Vec2 : void {
     # TODO append shader
     Mat4 proj
 
-    Shader* shd 
     Vec2 size
+    Shader* shd
 
-    shd swap =
     size swap =
+    shd swap =
 
     proj 0.0 size@.x f32' size@.y f32' 0.0 100.0 -1.0 Mat4.ortho =
 

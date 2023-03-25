@@ -3,4 +3,33 @@ struct Color {
     f32 g
     f32 b
     f32 a
+
+    def proc new f32 f32 f32 f32 : Color {
+      Color result
+
+      result.a swap =
+      result.b swap =
+      result.g swap =
+      result.r swap =
+
+      result@
+    }
+
+    def proc mix Color Color f32 : Color {
+      f32 pc
+      Color a
+      Color b
+      Color result
+
+      pc swap =
+      b swap =
+      a swap =
+
+      result.r a.r@ pc@ * b.r@ 1.0 pc@ - * + =
+      result.g a.g@ pc@ * b.g@ 1.0 pc@ - * + =
+      result.b a.b@ pc@ * b.b@ 1.0 pc@ - * + =
+      result.a a.a@ pc@ * b.a@ 1.0 pc@ - * + =
+
+      result@
+    }
 }

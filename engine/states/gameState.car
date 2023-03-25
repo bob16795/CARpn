@@ -1,0 +1,136 @@
+struct GameState {
+  Drawer [1] drawers
+  MultiSprite playersprite
+  Texture*[2] textures
+  Vec2 vel
+  BulletManager bullets
+  Stars stars
+
+  def proc init Shader* [2] : GameState {
+    GameState result
+
+    Shader* [2] shd
+
+    shd swap =
+
+    result.textures [0] "ship.png" Texture.new =
+    result.textures [1] "bullets.png" Texture.new =
+
+    result.playersprite.size.x 64.0 =
+    result.playersprite.size.y 64.0 =
+
+    result.playersprite.grid.x 3.0 =
+    result.playersprite.grid.y 3.0 =
+
+    result.playersprite.current.x 1.0 =
+    result.playersprite.current.y 0.0 =
+
+    result.playersprite.pos.x 286.0 =
+    result.playersprite.pos.y 300.0 =
+
+    result.vel.x 0.0 =
+    result.vel.y 0.0 =
+
+    result.drawers [0].getVerts (MultiSprite.getVerts) =
+    result.drawers [0].tex result.textures [0] @ =
+    result.drawers [0].shader shd [0] @ =
+
+    result.bullets result.textures [1] @ shd [0] @ BulletManager.new =
+    result.stars shd [1] @ Stars.init =
+
+    result @
+  }
+
+  def proc update GameState* f32 f32 : void {
+    f32 dt
+    f32 t
+    GameState* state
+
+    dt swap =
+    t swap =
+    state swap =
+
+    # friction
+    state@.vel state@.vel@ 0.9 Vec2.mul =
+
+    # input
+    state@.vel state@.vel@ Input.instance@.dir 2000.0 dt@ * Vec2.mul Vec2.add =
+
+    Input.instance.shoot@ if {
+      state@.bullets true state@.playersprite.pos@ 32.0 16.0 Vec2.new Vec2.add
+      BulletManager.spawn
+    }
+
+    # actual update
+    state@.playersprite.pos.y state@.playersprite.pos.y@ dt@ state@.vel.y@ * + =
+    state@.playersprite.pos.x state@.playersprite.pos.x@ dt@ state@.vel.x@ * + =
+
+    state@.bullets t@ dt@ BulletManager.update
+    state@.stars Stars.update
+  }
+
+  def proc lerp GameState* GameState GameState f32 : void {
+    GameState result
+    GameState a
+    GameState b
+    f32 pc
+
+    pc swap =
+    a swap =
+    b covr =
+    result swap =
+
+    result.playersprite a@.playersprite b@.playersprite pc@ MultiSprite.lerp
+    result.bullets a@.bullets b@.bullets pc@ BulletManager.lerp
+    result.stars a@.stars b@.stars pc@ Stars.lerp
+
+    result@ =
+  }
+
+  def proc copy GameState : GameState {
+    GameState result
+    GameState input
+
+    input swap =
+    result input@ =
+    result.bullets input@.bullets BulletManager.copy =
+
+    result@
+  }
+
+  def proc draw GameState* SpriteBatch* : void {
+    SpriteBatch* sb
+    GameState* state
+
+    sb swap =
+    state swap =
+
+    state@.playersprite.current.x 1.0 =
+    state@.playersprite.current.y 1.0 =
+    Input.instance.dir.x@ -0.1 < if {
+      state@.playersprite.current.x 0.0 =
+    }
+    Input.instance.dir.x@ 0.1 > if {
+      state@.playersprite.current.x 2.0 =
+    }
+    Input.instance.dir.y@ -0.1 < if {
+      state@.playersprite.current.y 2.0 =
+    }
+    Input.instance.dir.y@ 0.1 > if {
+      state@.playersprite.current.y 0.0 =
+    }
+
+    state@.bullets sb@ BulletManager.draw
+
+    state@.drawers [0].self state@.playersprite =
+    sb@ state@.drawers [0] @ SpriteBatch.draw
+
+    state@.stars.drawer.self state@.stars =
+    sb@ state@.stars.drawer@ SpriteBatch.draw
+  }
+
+
+  def proc free GameState : void {
+    .bullets BulletManager.free
+  }
+}

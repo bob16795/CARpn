@@ -1,131 +1,32 @@
-# include "tools/string.car"
+def proc setx anytype i32 : void {
+  i32 val  
 
-struct Win {}
+  val swap =
 
-# misc fns
-extern proc printf u8$* : void
+  .x val@ =
+}
 
-# glfw fns
-extern proc glfwInit : bool
-extern proc glfwCreateWindow i32 i32 u8$* void* void* : Win*
-extern proc glfwTerminate : void
-extern proc glfwPollEvents : void
-extern proc glfwSwapBuffers Win* : void
-extern proc glfwMakeContextCurrent Win* : void
-extern proc glfwWindowShouldClose Win* : bool
+struct lol {
+  i32 x
+}
 
-# opengl fns
-extern proc glClear u32 : void
-extern proc glGenBuffers u32 u32$* : void
-extern proc glGenVertexArrays u32 u32$* : void
-extern proc glBindBuffer u32 u32 : void
-extern proc glBindVertexArray u32 : void
-extern proc glBufferData u32 u32 f32$* u32 : void
-extern proc glCreateShader u32 : u32 
-extern proc glShaderSource u32 u32 u8$** void* : void
-extern proc glCompileShader u32 : void
-extern proc glCreateProgram : u32
-extern proc glAttachShader u32 u32 : void
-extern proc glLinkProgram u32 : void
-extern proc glUseProgram u32 : void
-extern proc glEnableVertexAttribArray u32 : void
-extern proc glVertexAttribPointer u32 u32 u32 u32 u32 void* : void
-extern proc glDrawArrays u32 u32 u32 : void
+struct lol2 {
+  i32 y
+  i32 x
+}
+
+extern proc printint i32 : void
 
 def proc main : i32 {
-  Win* window
-  f32 [18] verts
+  lol lmao
+  lol2 lmao2
 
-  verts [0]  -0.5 = verts [1]  -0.5 = verts [2]   0.0 =
-  verts [3]   0.5 = verts [4]  -0.5 = verts [5]   0.0 =
-  verts [6]  -0.5 = verts [7]   0.5 = verts [8]   0.0 =
+  lmao 10 setx
+  lmao2 10 setx
 
-  verts [9]   0.5 = verts [10]  0.5 = verts [11]  0.0 =
-  verts [12]  0.5 = verts [13] -0.5 = verts [14]  0.0 =
-  verts [15] -0.5 = verts [16]  0.5 = verts [17]  0.0 =
+  lmao.x @ printint
 
-  glfwInit! if {
-    "Could not init glfw" printf
-    1 ret
-  }
-
-  window 640 480 "Hello World!" null null glfwCreateWindow =
-
-  window @ null == if {
-    "Could not create window" printf
-    1 ret
-  }
-  
-  window @ glfwMakeContextCurrent
-  
-  u32 [1] VAOs
-  1 VAOs glGenVertexArrays
-
-  VAOs [0] @ glBindVertexArray
-
-  u32 [1] VBOs
-  u8$* [2] src
-
-  src
-  [0] "
-  #version 330 core
-  layout (location = 0) in vec3 aPos;
-  void main()
-  {
-    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-  }
-  " =
-
-  src
-  [1] "
-  #version 330 core
-  out vec4 FragColor;
-  void main()
-  {
-    FragColor = vec4(1.0f, 0.5f, 0.3f, 1.0f);
-  }
-  " =
-
-  1 VBOs glGenBuffers
-  34962 VBOs [0] @ glBindBuffer
-  34962 72 verts 35044 glBufferData
-
-  u32 VertexShader
-  u32 FragShader
-  u32 ShaderProgram
-
-  VertexShader 35633 glCreateShader =
-  VertexShader @ 1 src [0] null glShaderSource
-  VertexShader @ glCompileShader
-
-  FragShader 35632 glCreateShader =
-  FragShader @ 1 src [1] null glShaderSource
-  FragShader @ glCompileShader
-
-  ShaderProgram glCreateProgram =
-  ShaderProgram @ VertexShader @ glAttachShader
-  ShaderProgram @ FragShader @   glAttachShader
-  ShaderProgram @ glLinkProgram
-
-  0 3 5126 0 12 null glVertexAttribPointer
-  0 glEnableVertexAttribArray
-
-  do {
-    16384 glClear
-    
-    ShaderProgram @ glUseProgram
-    VAOs [0] @ glBindVertexArray
-    4 0 6 glDrawArrays
-
-    window @ glfwSwapBuffers
-  
-    glfwPollEvents
-
-    window @ glfwWindowShouldClose!
-  }
-
-  glfwTerminate
+  lmao2.x @ printint
 
   0
 }
-
