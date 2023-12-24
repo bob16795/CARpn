@@ -22,6 +22,9 @@ pub const Token = struct {
         Global,
         Func,
         Const,
+        Import,
+        Embed,
+        While,
     };
 
     type: Type,

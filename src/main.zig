@@ -45,6 +45,7 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (std.mem.eql(u8, name, "def")) appends.type = .Def;
             if (std.mem.eql(u8, name, "if")) appends.type = .If;
             if (std.mem.eql(u8, name, "do")) appends.type = .Do;
+            if (std.mem.eql(u8, name, "while")) appends.type = .While;
             if (std.mem.eql(u8, name, "for")) appends.type = .For;
             if (std.mem.eql(u8, name, "struct")) appends.type = .Struct;
             if (std.mem.eql(u8, name, "macro")) appends.type = .Macro;
@@ -54,6 +55,8 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
             if (std.mem.eql(u8, name, "err")) appends.type = .Error;
             if (std.mem.eql(u8, name, "global")) appends.type = .Global;
             if (std.mem.eql(u8, name, "const")) appends.type = .Const;
+            if (std.mem.eql(u8, name, "import")) appends.type = .Import;
+            if (std.mem.eql(u8, name, "embed")) appends.type = .Embed;
 
             name = try allocator.alloc.realloc(name, name.len + 1);
             name[name.len - 1] = 0;
@@ -246,6 +249,69 @@ pub fn parseTokens(input: []const u8) !std.ArrayList(token.Token) {
     return result;
 }
 
+var inc = std.ArrayList([]const u8).init(allocator.alloc);
+
+pub fn gen(toks: *std.ArrayList(token.Token)) !void {
+    while (toks.items.len != 0) {
+        switch (toks.items[0].type) {
+            .Import => {
+                _ = toks.orderedRemove(0);
+                var name = toks.orderedRemove(0).value;
+                var new_toks = try parseTokens(name);
+
+                var bad = false;
+                for (inc.items) |i| {
+                    if (std.mem.eql(u8, i, name)) {
+                        bad = true;
+                    }
+                }
+
+                if (bad) {
+                    continue;
+                }
+
+                std.log.info("LEX {s}", .{name});
+
+                try inc.append(name);
+
+                try gen(&new_toks);
+            },
+            .Def => {
+                var def = try parser.DefinitionAST.parse(toks);
+                _ = try def.codegen();
+            },
+            .Extern => {
+                var ext = try parser.ExternAST.parse(toks);
+                _ = try ext.codegen();
+            },
+            .Func => {
+                var ext = try parser.FuncTypeAST.parse(toks);
+                _ = try ext.codegen();
+            },
+            .Struct => {
+                var str = try parser.StructAST.parse(toks);
+                _ = try str.codegen();
+            },
+            .Const => {
+                var str = try parser.ConstAST.parse(toks);
+                _ = try str.codegen();
+            },
+            .Global => {
+                var str = try parser.GlobalAST.parse(toks);
+                _ = try str.codegen();
+            },
+            .Macro => {
+                var str = try parser.MacroAST.parse(toks);
+                _ = try str.codegen();
+            },
+            else => {
+                std.log.info("{s}", .{toks.items[0].value});
+                return error.BadToken;
+            },
+        }
+    }
+}
+
 pub fn main() !void {
     llvmlib.LLVMInitializeWebAssemblyTargetInfo();
     llvmlib.LLVMInitializeWebAssemblyTarget();
@@ -256,6 +322,7 @@ pub fn main() !void {
     parser.TheContext = llvmlib.Context.create();
     parser.TheModule = llvmlib.Module.createWithName("Context", parser.TheContext);
     parser.Builder = parser.TheContext.createBuilder();
+    parser.named = std.StringHashMap(parser.StackEntry).init(allocator.alloc);
     try parser.setupNamed();
 
     var args = try std.process.ArgIterator.initWithAllocator(allocator.alloc);
@@ -266,44 +333,16 @@ pub fn main() !void {
         std.log.info("LEX {s}", .{arg});
         var toks = try parseTokens(arg);
 
+        try inc.append(arg[0..std.mem.len(@as([*c]const u8, @ptrCast(arg)))]);
+
+        try gen(&toks);
+
         std.log.info("CAR {s}", .{arg});
-        while (toks.items.len != 0) {
-            switch (toks.items[0].type) {
-                .Def => {
-                    var def = try parser.DefinitionAST.parse(&toks);
-                    _ = try def.codegen();
-                },
-                .Extern => {
-                    var ext = try parser.ExternAST.parse(&toks);
-                    _ = try ext.codegen();
-                },
-                .Func => {
-                    var ext = try parser.FuncTypeAST.parse(&toks);
-                    _ = try ext.codegen();
-                },
-                .Struct => {
-                    var str = try parser.StructAST.parse(&toks);
-                    _ = try str.codegen();
-                },
-                .Const => {
-                    var str = try parser.ConstAST.parse(&toks);
-                    _ = try str.codegen();
-                },
-                .Global => {
-                    var str = try parser.GlobalAST.parse(&toks);
-                    _ = try str.codegen();
-                },
-                else => {
-                    std.log.info("{s}", .{toks.items[0].value});
-                    return error.BadToken;
-                },
-            }
-        }
     }
 
     var values = parser.ValueStack.init(allocator.alloc);
 
-    _ = try parser.getFunction("main", &values);
+    _ = try parser.getFunction(&values, parser.named.get("main").?);
     var str = parser.TheModule.printToString();
 
     var file = try std.fs.cwd().createFile("tmp", .{});
@@ -325,7 +364,7 @@ pub fn main() !void {
     //const thriple: [*:0]const u8 = "x86_64-pc-linux-gnu";
     const thriple: [*:0]const u8 = "wasm32-unknown-emscripten";
     const out: [*:0]const u8 = "lol.o";
-    var opt: llvmlib.RelocMode = .Static;
+    var opt: llvmlib.RelocMode = .Default;
     var t: *llvmlib.Target = undefined;
     var err: [*:0]const u8 = @as([*:0]const u8, @ptrCast(try allocator.alloc.alloc(u8, 512)));
     if (llvmlib.Target.getFromTriple(thriple, &t, &err) != .False) {
@@ -340,7 +379,7 @@ pub fn main() !void {
 
     var output = try std.ChildProcess.exec(.{
         .allocator = allocator.alloc,
-        .argv = &[_][]const u8{ "emcc", "-O0", "-static", "-lglfw", "-sALLOW_MEMORY_GROWTH=1", "-sINITIAL_MEMORY=2gb", "-sMAXIMUM_MEMORY=4gb", "-sASSERTIONS=2", "--preload-file", "resources@", "-ogame.html", "lol.o", "-Wall", "-sUSE_GLFW=3", "--shell-file", "shell.html", "-DPLATFORM_WEB", "test.c", "engine/stb_image.c" },
+        .argv = &[_][]const u8{ "emcc", "-lopenal", "-Os", "-lglfw", "-sASSERTIONS=2", "--preload-file", "resources@", "-ogame.html", "lol.o", "-Wall", "-sUSE_GLFW=3", "--shell-file", "shell.html", "-DPLATFORM_WEB", "test.c", "engine/stb_image.c", "-sSTACK_SIZE=1gb", "-sINITIAL_MEMORY=2gb" },
     });
 
     if (output.stdout.len != 0)

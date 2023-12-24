@@ -1,3 +1,4 @@
+const std = @import("std");
 const llvmlib = @import("llvm.zig");
 const parser = @import("parser.zig");
 const allocator = @import("allocator.zig");
@@ -31,7 +32,7 @@ pub const RefValueData = struct {
             },
         };
 
-        return .{
+        const result = .{
             .aType = ctx.structType(
                 @ptrCast(&.{
                     ctx.pointerType(0),
@@ -42,8 +43,15 @@ pub const RefValueData = struct {
             ),
             .name = "ref",
             .data = .{
-                .Struct = @ptrCast(structEntries),
+                .Struct = try allocator.alloc.create(parser.StructTypeData),
             },
         };
+
+        result.data.Struct.* = .{
+            .entries = @ptrCast(structEntries),
+            .children = std.StringHashMap(parser.StackEntry).init(allocator.alloc),
+        };
+
+        return result;
     }
 };
