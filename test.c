@@ -1,5 +1,5 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include "engine/stb_image.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 double glfwGetTime();
@@ -7,20 +7,15 @@ double glfwGetTime();
 void setuprand() {
   time_t t;
 
-  srand((unsigned) time(&t));
+  srand((unsigned)time(&t));
 }
 
-float randf() {
-  return (float)rand() / RAND_MAX;
-}
+float randf() { return (float)rand() / (float)RAND_MAX; }
 
-void printfloat(float error) {
-  printf("float: %f\n", error);
-}
+void printfloat(float error) { printf("float: %f\n", error); }
+void printline(char *line) { printf("%s\n", line); }
 
-void printint(int error) {
-  printf("int: %u\n", error);
-}
+void printint(int error) { printf("int: %u\n", error); }
 
 float getTimeFloat() {
   double res = glfwGetTime();

@@ -15,7 +15,7 @@ struct Shader {
     count swap =
     files swap =
 
-    result Shader.SIZE i64' malloc =
+    result Shader.SIZE i32' malloc =
     result@.id glCreateProgram =
 
     count @ 0 == if { null ret }

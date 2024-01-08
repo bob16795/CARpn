@@ -1,0 +1,3709 @@
+; ModuleID = 'Context'
+source_filename = "Context"
+
+%GameState = type { %MultiSprite, [2 x ptr], %Vec2, %BulletManager, %Stars }
+%MultiSprite = type { %Vec2, %Vec2, %Vec2, %Vec2, ptr, ptr }
+%Vec2 = type { float, float }
+%BulletManager = type { ptr, i32, ptr, ptr }
+%Stars = type { i32, [100 x %Star], ptr, ptr }
+%Star = type { float, i1, %Vec2, %Color }
+%Color = type { float, float, float, float }
+%SpriteBatch = type { ptr, ptr, ptr, i32, %Vec2 }
+%GFXContext = type { ptr, %Color, %IVec2 }
+%IVec2 = type { i32, i32 }
+%Input = type { %Vec2, i1 }
+%ShaderFile = type { ptr, i32, i32 }
+%Shader = type { i32 }
+%Mat4 = type { [4 x [4 x float]] }
+%SBQueue = type { ptr, i32 }
+%Texture = type { i32, %IVec2 }
+%Bullet = type { %Sprite, i1, %Vec2, i1 }
+%Sprite = type { %Vec2, %Vec2, ptr, ptr }
+%SBQueueEntry = type { i1, i32, ptr, ptr, ptr }
+%Verts = type { ptr, i32 }
+%Vert = type { float, float, float, float, float, float, float, float, float }
+%Rect = type { float, float, float, float }
+%SBContext = type { ptr, ptr }
+
+@globalPtr = global ptr null
+@globalPtr.1 = global float 0.000000e+00
+@globalPtr.2 = global float 0.000000e+00
+@globalPtr.3 = global float 0.000000e+00
+@globalPtr.4 = global float 0.000000e+00
+@globalPtr.5 = global %GameState zeroinitializer
+@globalPtr.6 = global %GameState zeroinitializer
+@globalPtr.7 = global %SpriteBatch zeroinitializer
+@globalPtr.8 = global ptr null
+@str = global [20 x i8] c"Could not init glfw\00"
+@str.9 = global [11 x i8] c"CARpn Test\00"
+@str.10 = global [9 x i8] c"init gfx\00"
+@str.11 = global [294 x i8] c"\0Aprecision highp float;\0Aattribute vec3 aVertex;\0Aattribute vec2 aTexCoords;\0Aattribute vec4 aColor;\0Auniform mat4 projection;\0Avarying vec2 texCoords;\0Avarying vec4 tintColor;\0Avoid main()\0A{\0A    gl_Position = projection * vec4(aVertex.xyz, 1.0);\0A    texCoords = aTexCoords;\0A    tintColor = aColor;\0A}\00"
+@str.12 = global [158 x i8] c"\0Aprecision highp float;\0A\0Avarying vec2 texCoords;\0Avarying vec4 tintColor;\0A\0Auniform sampler2D tex;\0A\0Avoid main() {\0A  gl_FragColor = texture2D(tex, texCoords);\0A}\00"
+@str.13 = global [294 x i8] c"\0Aprecision highp float;\0Aattribute vec3 aVertex;\0Aattribute vec2 aTexCoords;\0Aattribute vec4 aColor;\0Auniform mat4 projection;\0Avarying vec2 texCoords;\0Avarying vec4 tintColor;\0Avoid main()\0A{\0A    gl_Position = projection * vec4(aVertex.xyz, 1.0);\0A    texCoords = aTexCoords;\0A    tintColor = aColor;\0A}\00"
+@str.14 = global [145 x i8] c"\0Aprecision highp float;\0A\0Avarying vec2 texCoords;\0Avarying vec4 tintColor;\0A\0Auniform sampler2D tex;\0A\0Avoid main() {\0A     gl_FragColor = tintColor;\0A}\00"
+@str.15 = global [11 x i8] c"projection\00"
+@str.16 = global [9 x i8] c"ship.png\00"
+@str.17 = global [12 x i8] c"bullets.png\00"
+@str.18 = global [5 x i8] c"init\00"
+
+declare void @printf(ptr)
+
+declare ptr @malloc(i32)
+
+declare ptr @calloc(i32, i32)
+
+declare ptr @realloc(ptr, i32)
+
+declare void @free(ptr)
+
+declare void @exit(i32)
+
+declare i32 @memcpy(ptr, ptr, i32)
+
+declare float @sqrt(float)
+
+declare void @printfloat(float)
+
+declare void @emscripten_sleep(i32)
+
+declare void @printline(ptr)
+
+declare i1 @glfwInit()
+
+declare ptr @glfwCreateWindow(i32, i32, ptr, ptr, ptr)
+
+declare void @glfwTerminate()
+
+declare void @glfwPollEvents()
+
+declare void @glfwSwapBuffers(ptr)
+
+declare void @glfwMakeContextCurrent(ptr)
+
+declare i1 @glfwWindowShouldClose(ptr)
+
+declare void @glfwGetFramebufferSize(ptr, ptr, ptr)
+
+declare float @glfwGetTime()
+
+declare void @glfwSwapInterval(i32)
+
+declare void @glfwSetKeyCallback(ptr, ptr)
+
+declare void @glfwSetWindowSizeCallback(ptr, ptr)
+
+declare void @glClearColor(float, float, float, float)
+
+declare void @glClear(i32)
+
+declare void @glEnable(i32)
+
+declare void @glBlendFunc(i32, i32)
+
+declare void @glDeleteBuffers(i32, ptr)
+
+declare void @glGenBuffers(i32, ptr)
+
+declare void @glBindBuffer(i32, i32)
+
+declare void @glBindTexture(i32, i32)
+
+declare void @glBufferData(i32, i32, ptr, i32)
+
+declare void @glVertexAttribPointer(i32, i32, i32, i32, i32, ptr)
+
+declare void @glEnableVertexAttribArray(i32)
+
+declare void @glDrawArrays(i32, i32, i32)
+
+declare i32 @glCreateShader(i32)
+
+declare i32 @glCreateProgram()
+
+declare void @glShaderSource(i32, i32, ptr, ptr)
+
+declare void @glCompileShader(i32)
+
+declare void @glAttachShader(i32, i32)
+
+declare void @glLinkProgram(i32)
+
+declare void @glUseProgram(i32)
+
+declare void @glGenTextures(i32, ptr)
+
+declare void @glTexImage2D(i32, i32, i32, i32, i32, i32, i32, i32, ptr)
+
+declare void @glGenerateMipmap(i32)
+
+declare i32 @glGetUniformLocation(i32, ptr)
+
+declare void @glUniformMatrix4fv(i32, i32, i32, ptr)
+
+declare void @glTexParameteri(i32, i32, i32)
+
+declare void @glScissor(i32, i32, i32, i32)
+
+declare ptr @stbi_load(ptr, ptr, ptr, ptr, i32)
+
+declare void @stbi_image_free(ptr)
+
+declare void @printint(i32)
+
+declare void @setuprand()
+
+declare float @randf()
+
+declare float @getTimeFloat()
+
+declare void @emscripten_set_main_loop(ptr)
+
+define i32 @main() {
+entry:
+  %shd = alloca [2 x ptr], align 8
+  %calltmp = call ptr @GFXContext.init_0()
+  store ptr %calltmp, ptr @globalPtr.8, align 8
+  %readtmp = load ptr, ptr @globalPtr.8, align 8
+  %calltmp1 = call void @Input.init_0(ptr %readtmp)
+  %elemtemp = getelementptr inbounds [2 x ptr], ptr %shd, i32 0, i32 0
+  %calltmp2 = call ptr @getTexShaders_0()
+  %calltmp3 = call ptr @Shader.new_0(ptr %calltmp2, i32 2)
+  store ptr %calltmp3, ptr %elemtemp, align 8
+  %elemtemp4 = getelementptr inbounds [2 x ptr], ptr %shd, i32 0, i32 1
+  %calltmp5 = call ptr @getPixShaders_0()
+  %calltmp6 = call ptr @Shader.new_0(ptr %calltmp5, i32 2)
+  store ptr %calltmp6, ptr %elemtemp4, align 8
+  %elemtemp7 = getelementptr inbounds [2 x ptr], ptr %shd, i32 0, i32 0
+  %readtmp8 = load ptr, ptr %elemtemp7, align 8
+  %calltmp9 = call %Vec2 @Vec2.new_0(float 6.400000e+02, float 4.800000e+02)
+  %calltmp10 = call void @Shader.setSize_0(ptr %readtmp8, %Vec2 %calltmp9)
+  %elemtemp11 = getelementptr inbounds [2 x ptr], ptr %shd, i32 0, i32 1
+  %readtmp12 = load ptr, ptr %elemtemp11, align 8
+  %calltmp13 = call %Vec2 @Vec2.new_0(float 6.400000e+02, float 4.800000e+02)
+  %calltmp14 = call void @Shader.setSize_0(ptr %readtmp12, %Vec2 %calltmp13)
+  %calltmp15 = call void @SpriteBatch.init_0(ptr @globalPtr.7)
+  store float 0.000000e+00, ptr @globalPtr.1, align 4
+  store float 0x3F9EB851E0000000, ptr @globalPtr.2, align 4
+  %calltmp16 = call float @getTimeFloat()
+  store float %calltmp16, ptr @globalPtr.3, align 4
+  store float 0.000000e+00, ptr @globalPtr.4, align 4
+  %readtmp17 = load [2 x ptr], ptr %shd, align 8
+  %calltmp18 = call %GameState @GameState.init_0([2 x ptr] %readtmp17)
+  store %GameState %calltmp18, ptr @globalPtr.5, align 8
+  %readtmp19 = load %GameState, ptr @globalPtr.5, align 8
+  store %GameState %readtmp19, ptr @globalPtr.6, align 8
+  %calltmp20 = call void @printline(ptr @str.18)
+  %calltmp21 = call void @emscripten_set_main_loop(ptr @loop_0)
+  ret i32 0
+}
+
+define ptr @GFXContext.init_0() {
+entry:
+  %result = alloca ptr, align 8
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %GFXContext], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr %result, align 8
+  %calltmp1 = call i1 @glfwInit()
+  %nottmp = xor i1 %calltmp1, true
+  %ifcond = icmp ne i1 %nottmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  %calltmp2 = call void @printline(ptr @str)
+  %calltmp3 = call void @exit(i32 1)
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %entry
+  %readtmp = load ptr, ptr %result, align 8
+  %0 = getelementptr inbounds %GFXContext, ptr %readtmp, i32 0, i32 0
+  %calltmp4 = call ptr @glfwCreateWindow(i32 640, i32 480, ptr @str.9, i32 0, i32 0)
+  store ptr %calltmp4, ptr %0, align 8
+  %readtmp5 = load ptr, ptr %result, align 8
+  %1 = getelementptr inbounds %GFXContext, ptr %readtmp5, i32 0, i32 0
+  %readtmp6 = load ptr, ptr %1, align 8
+  %calltmp7 = call void @glfwMakeContextCurrent(ptr %readtmp6)
+  %readtmp8 = load ptr, ptr %result, align 8
+  %2 = getelementptr inbounds %GFXContext, ptr %readtmp8, i32 0, i32 0
+  %readtmp9 = load ptr, ptr %2, align 8
+  %readtmp10 = load ptr, ptr %result, align 8
+  %3 = getelementptr inbounds %GFXContext, ptr %readtmp10, i32 0, i32 2
+  %4 = getelementptr inbounds %IVec2, ptr %3, i32 0, i32 0
+  %readtmp11 = load ptr, ptr %result, align 8
+  %5 = getelementptr inbounds %GFXContext, ptr %readtmp11, i32 0, i32 2
+  %6 = getelementptr inbounds %IVec2, ptr %5, i32 0, i32 1
+  %calltmp12 = call void @glfwGetFramebufferSize(ptr %readtmp9, ptr %4, ptr %6)
+  %readtmp13 = load ptr, ptr %result, align 8
+  %7 = getelementptr inbounds %GFXContext, ptr %readtmp13, i32 0, i32 0
+  %readtmp14 = load ptr, ptr %7, align 8
+  %calltmp15 = call void @glfwSetWindowSizeCallback(ptr %readtmp14, ptr @GFXContext.resizeCallback_0)
+  %readtmp16 = load ptr, ptr %result, align 8
+  %8 = getelementptr inbounds %GFXContext, ptr %readtmp16, i32 0, i32 1
+  %9 = getelementptr inbounds %Color, ptr %8, i32 0, i32 0
+  store float 0.000000e+00, ptr %9, align 4
+  %readtmp17 = load ptr, ptr %result, align 8
+  %10 = getelementptr inbounds %GFXContext, ptr %readtmp17, i32 0, i32 1
+  %11 = getelementptr inbounds %Color, ptr %10, i32 0, i32 1
+  store float 0.000000e+00, ptr %11, align 4
+  %readtmp18 = load ptr, ptr %result, align 8
+  %12 = getelementptr inbounds %GFXContext, ptr %readtmp18, i32 0, i32 1
+  %13 = getelementptr inbounds %Color, ptr %12, i32 0, i32 2
+  store float 0x3FA99999A0000000, ptr %13, align 4
+  %readtmp19 = load ptr, ptr %result, align 8
+  %14 = getelementptr inbounds %GFXContext, ptr %readtmp19, i32 0, i32 1
+  %15 = getelementptr inbounds %Color, ptr %14, i32 0, i32 3
+  store float 1.000000e+00, ptr %15, align 4
+  %calltmp20 = call void @printline(ptr @str.10)
+  %readtmp21 = load ptr, ptr %result, align 8
+  ret ptr %readtmp21
+}
+
+define void @GFXContext.resizeCallback_0(ptr %0, i32 %1, i32 %2) {
+entry:
+  %width = alloca i32, align 4
+  %height = alloca i32, align 4
+  %window = alloca ptr, align 8
+  store i32 %2, ptr %height, align 4
+  store i32 %1, ptr %width, align 4
+  store ptr %0, ptr %window, align 8
+  ret void
+}
+
+define void @Input.init_0(ptr %0) {
+entry:
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Input], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr @globalPtr, align 8
+  %calltmp1 = call ptr @Input.instance_0()
+  %1 = getelementptr inbounds %Input, ptr %calltmp1, i32 0, i32 0
+  %2 = getelementptr inbounds %Vec2, ptr %1, i32 0, i32 1
+  store float 0.000000e+00, ptr %2, align 4
+  %calltmp2 = call ptr @Input.instance_0()
+  %3 = getelementptr inbounds %Input, ptr %calltmp2, i32 0, i32 0
+  %4 = getelementptr inbounds %Vec2, ptr %3, i32 0, i32 0
+  store float 0.000000e+00, ptr %4, align 4
+  %5 = getelementptr inbounds %GFXContext, ptr %0, i32 0, i32 0
+  %readtmp = load ptr, ptr %5, align 8
+  %calltmp3 = call void @glfwSetKeyCallback(ptr %readtmp, ptr @Input.keyCallback_0)
+  ret void
+}
+
+define ptr @Input.instance_0() {
+entry:
+  %readtmp = load ptr, ptr @globalPtr, align 8
+  ret ptr %readtmp
+}
+
+define void @Input.keyCallback_0(ptr %0, i32 %1, i32 %2, i32 %3, i32 %4) {
+entry:
+  %adds = alloca %Vec2, align 8
+  %5 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 0
+  store float 0.000000e+00, ptr %5, align 4
+  %6 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 1
+  store float 0.000000e+00, ptr %6, align 4
+  %neqtmp = icmp eq i32 263, %1
+  %ifcond = icmp ne i1 %neqtmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  %7 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 0
+  store float -1.000000e+00, ptr %7, align 4
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %entry
+  %neqtmp1 = icmp eq i32 262, %1
+  %ifcond2 = icmp ne i1 %neqtmp1, false
+  br i1 %ifcond2, label %ifbody3, label %ifmerge4
+
+ifbody3:                                          ; preds = %ifmerge
+  %8 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 0
+  store float 1.000000e+00, ptr %8, align 4
+  br label %ifmerge4
+
+ifmerge4:                                         ; preds = %ifbody3, %ifmerge
+  %neqtmp5 = icmp eq i32 265, %1
+  %ifcond6 = icmp ne i1 %neqtmp5, false
+  br i1 %ifcond6, label %ifbody7, label %ifmerge8
+
+ifbody7:                                          ; preds = %ifmerge4
+  %9 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 1
+  store float -1.000000e+00, ptr %9, align 4
+  br label %ifmerge8
+
+ifmerge8:                                         ; preds = %ifbody7, %ifmerge4
+  %neqtmp9 = icmp eq i32 264, %1
+  %ifcond10 = icmp ne i1 %neqtmp9, false
+  br i1 %ifcond10, label %ifbody11, label %ifmerge12
+
+ifbody11:                                         ; preds = %ifmerge8
+  %10 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 1
+  store float 1.000000e+00, ptr %10, align 4
+  br label %ifmerge12
+
+ifmerge12:                                        ; preds = %ifbody11, %ifmerge8
+  %neqtmp13 = icmp eq i32 65, %1
+  %ifcond14 = icmp ne i1 %neqtmp13, false
+  br i1 %ifcond14, label %ifbody15, label %ifmerge16
+
+ifbody15:                                         ; preds = %ifmerge12
+  %11 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 0
+  store float -1.000000e+00, ptr %11, align 4
+  br label %ifmerge16
+
+ifmerge16:                                        ; preds = %ifbody15, %ifmerge12
+  %neqtmp17 = icmp eq i32 68, %1
+  %ifcond18 = icmp ne i1 %neqtmp17, false
+  br i1 %ifcond18, label %ifbody19, label %ifmerge20
+
+ifbody19:                                         ; preds = %ifmerge16
+  %12 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 0
+  store float 1.000000e+00, ptr %12, align 4
+  br label %ifmerge20
+
+ifmerge20:                                        ; preds = %ifbody19, %ifmerge16
+  %neqtmp21 = icmp eq i32 87, %1
+  %ifcond22 = icmp ne i1 %neqtmp21, false
+  br i1 %ifcond22, label %ifbody23, label %ifmerge24
+
+ifbody23:                                         ; preds = %ifmerge20
+  %13 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 1
+  store float -1.000000e+00, ptr %13, align 4
+  br label %ifmerge24
+
+ifmerge24:                                        ; preds = %ifbody23, %ifmerge20
+  %neqtmp25 = icmp eq i32 83, %1
+  %ifcond26 = icmp ne i1 %neqtmp25, false
+  br i1 %ifcond26, label %ifbody27, label %ifmerge28
+
+ifbody27:                                         ; preds = %ifmerge24
+  %14 = getelementptr inbounds %Vec2, ptr %adds, i32 0, i32 1
+  store float 1.000000e+00, ptr %14, align 4
+  br label %ifmerge28
+
+ifmerge28:                                        ; preds = %ifbody27, %ifmerge24
+  %neqtmp29 = icmp eq i32 0, %3
+  %ifcond30 = icmp ne i1 %neqtmp29, false
+  br i1 %ifcond30, label %ifbody31, label %ifmerge32
+
+ifbody31:                                         ; preds = %ifmerge28
+  %calltmp = call ptr @Input.instance_0()
+  %15 = getelementptr inbounds %Input, ptr %calltmp, i32 0, i32 0
+  %calltmp33 = call ptr @Input.instance_0()
+  %16 = getelementptr inbounds %Input, ptr %calltmp33, i32 0, i32 0
+  %readtmp = load %Vec2, ptr %16, align 4
+  %readtmp34 = load %Vec2, ptr %adds, align 4
+  %calltmp35 = call %Vec2 @Vec2.mul_0(%Vec2 %readtmp34, float -1.000000e+00)
+  %calltmp36 = call %Vec2 @Vec2.add_0(%Vec2 %readtmp, %Vec2 %calltmp35)
+  store %Vec2 %calltmp36, ptr %15, align 4
+  %neqtmp37 = icmp eq i32 32, %1
+  %ifcond38 = icmp ne i1 %neqtmp37, false
+  br i1 %ifcond38, label %ifbody39, label %ifmerge40
+
+ifmerge32:                                        ; preds = %ifmerge40, %ifmerge28
+  %neqtmp42 = icmp eq i32 1, %3
+  %ifcond43 = icmp ne i1 %neqtmp42, false
+  br i1 %ifcond43, label %ifbody44, label %ifmerge45
+
+ifbody39:                                         ; preds = %ifbody31
+  %calltmp41 = call ptr @Input.instance_0()
+  %17 = getelementptr inbounds %Input, ptr %calltmp41, i32 0, i32 1
+  store i1 false, ptr %17, align 1
+  br label %ifmerge40
+
+ifmerge40:                                        ; preds = %ifbody39, %ifbody31
+  br label %ifmerge32
+
+ifbody44:                                         ; preds = %ifmerge32
+  %calltmp46 = call ptr @Input.instance_0()
+  %18 = getelementptr inbounds %Input, ptr %calltmp46, i32 0, i32 0
+  %calltmp47 = call ptr @Input.instance_0()
+  %19 = getelementptr inbounds %Input, ptr %calltmp47, i32 0, i32 0
+  %readtmp48 = load %Vec2, ptr %19, align 4
+  %readtmp49 = load %Vec2, ptr %adds, align 4
+  %calltmp50 = call %Vec2 @Vec2.add_0(%Vec2 %readtmp48, %Vec2 %readtmp49)
+  store %Vec2 %calltmp50, ptr %18, align 4
+  %neqtmp51 = icmp eq i32 32, %1
+  %ifcond52 = icmp ne i1 %neqtmp51, false
+  br i1 %ifcond52, label %ifbody53, label %ifmerge54
+
+ifmerge45:                                        ; preds = %ifmerge54, %ifmerge32
+  ret void
+
+ifbody53:                                         ; preds = %ifbody44
+  %calltmp55 = call ptr @Input.instance_0()
+  %20 = getelementptr inbounds %Input, ptr %calltmp55, i32 0, i32 1
+  store i1 true, ptr %20, align 1
+  br label %ifmerge54
+
+ifmerge54:                                        ; preds = %ifbody53, %ifbody44
+  br label %ifmerge45
+}
+
+define %Vec2 @Vec2.mul_0(%Vec2 %0, float %1) {
+entry:
+  %result = alloca %Vec2, align 8
+  %extracted = extractvalue %Vec2 %0, 0
+  %multmp = fmul float %extracted, %1
+  %2 = getelementptr inbounds %Vec2, ptr %result, i32 0, i32 0
+  store float %multmp, ptr %2, align 4
+  %extracted1 = extractvalue %Vec2 %0, 1
+  %multmp2 = fmul float %extracted1, %1
+  %3 = getelementptr inbounds %Vec2, ptr %result, i32 0, i32 1
+  store float %multmp2, ptr %3, align 4
+  %readtmp = load %Vec2, ptr %result, align 4
+  ret %Vec2 %readtmp
+}
+
+define %Vec2 @Vec2.add_0(%Vec2 %0, %Vec2 %1) {
+entry:
+  %result = alloca %Vec2, align 8
+  %extracted = extractvalue %Vec2 %0, 0
+  %extracted1 = extractvalue %Vec2 %1, 0
+  %addtmp = fadd float %extracted, %extracted1
+  %2 = getelementptr inbounds %Vec2, ptr %result, i32 0, i32 0
+  store float %addtmp, ptr %2, align 4
+  %extracted2 = extractvalue %Vec2 %0, 1
+  %extracted3 = extractvalue %Vec2 %1, 1
+  %addtmp4 = fadd float %extracted2, %extracted3
+  %3 = getelementptr inbounds %Vec2, ptr %result, i32 0, i32 1
+  store float %addtmp4, ptr %3, align 4
+  %readtmp = load %Vec2, ptr %result, align 4
+  ret %Vec2 %readtmp
+}
+
+define ptr @getTexShaders_0() {
+entry:
+  %result = alloca ptr, align 8
+  %calltmp = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %ShaderFile], ptr null, i32 1) to i32), i32 2)
+  store ptr %calltmp, ptr %result, align 8
+  %readtmp = load ptr, ptr %result, align 8
+  %elemtemp = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp, i32 0, i32 0
+  %0 = getelementptr inbounds %ShaderFile, ptr %elemtemp, i32 0, i32 0
+  %calltmp1 = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x ptr], ptr null, i32 1) to i32), i32 1)
+  store ptr %calltmp1, ptr %0, align 8
+  %readtmp2 = load ptr, ptr %result, align 8
+  %elemtemp3 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp2, i32 0, i32 0
+  %1 = getelementptr inbounds %ShaderFile, ptr %elemtemp3, i32 0, i32 2
+  store i32 35633, ptr %1, align 4
+  %readtmp4 = load ptr, ptr %result, align 8
+  %elemtemp5 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp4, i32 0, i32 0
+  %2 = getelementptr inbounds %ShaderFile, ptr %elemtemp5, i32 0, i32 1
+  store i32 1, ptr %2, align 4
+  %readtmp6 = load ptr, ptr %result, align 8
+  %elemtemp7 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp6, i32 0, i32 0
+  %3 = getelementptr inbounds %ShaderFile, ptr %elemtemp7, i32 0, i32 0
+  %readtmp8 = load ptr, ptr %3, align 8
+  store ptr @str.11, ptr %readtmp8, align 8
+  %readtmp9 = load ptr, ptr %result, align 8
+  %elemtemp10 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp9, i32 0, i32 1
+  %4 = getelementptr inbounds %ShaderFile, ptr %elemtemp10, i32 0, i32 0
+  %calltmp11 = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x ptr], ptr null, i32 1) to i32), i32 1)
+  store ptr %calltmp11, ptr %4, align 8
+  %readtmp12 = load ptr, ptr %result, align 8
+  %elemtemp13 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp12, i32 0, i32 1
+  %5 = getelementptr inbounds %ShaderFile, ptr %elemtemp13, i32 0, i32 2
+  store i32 35632, ptr %5, align 4
+  %readtmp14 = load ptr, ptr %result, align 8
+  %elemtemp15 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp14, i32 0, i32 1
+  %6 = getelementptr inbounds %ShaderFile, ptr %elemtemp15, i32 0, i32 1
+  store i32 1, ptr %6, align 4
+  %readtmp16 = load ptr, ptr %result, align 8
+  %elemtemp17 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp16, i32 0, i32 1
+  %7 = getelementptr inbounds %ShaderFile, ptr %elemtemp17, i32 0, i32 0
+  %readtmp18 = load ptr, ptr %7, align 8
+  store ptr @str.12, ptr %readtmp18, align 8
+  %readtmp19 = load ptr, ptr %result, align 8
+  ret ptr %readtmp19
+}
+
+define ptr @Shader.new_0(ptr %0, i32 %1) {
+entry:
+  %result = alloca ptr, align 8
+  %files = alloca ptr, align 8
+  %count = alloca i32, align 4
+  store i32 %1, ptr %count, align 4
+  store ptr %0, ptr %files, align 8
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Shader], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr %result, align 8
+  %readtmp = load ptr, ptr %result, align 8
+  %2 = getelementptr inbounds %Shader, ptr %readtmp, i32 0, i32 0
+  %calltmp1 = call i32 @glCreateProgram()
+  store i32 %calltmp1, ptr %2, align 4
+  %readtmp2 = load i32, ptr %count, align 4
+  %neqtmp = icmp eq i32 0, %readtmp2
+  %ifcond = icmp ne i1 %neqtmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  ret i32 0
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %entry
+  br label %dobody
+
+dobody:                                           ; preds = %dobody, %ifmerge
+  %readtmp3 = load i32, ptr %count, align 4
+  %subtmp = sub i32 %readtmp3, 1
+  store i32 %subtmp, ptr %count, align 4
+  %shader = alloca i32, align 4
+  %readtmp4 = load ptr, ptr %files, align 8
+  %readtmp5 = load i32, ptr %count, align 4
+  %idxtmp = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp4, i32 %readtmp5
+  %3 = getelementptr inbounds %ShaderFile, ptr %idxtmp, i32 0, i32 2
+  %readtmp6 = load i32, ptr %3, align 4
+  %calltmp7 = call i32 @glCreateShader(i32 %readtmp6)
+  store i32 %calltmp7, ptr %shader, align 4
+  %readtmp8 = load i32, ptr %shader, align 4
+  %readtmp9 = load ptr, ptr %files, align 8
+  %readtmp10 = load i32, ptr %count, align 4
+  %idxtmp11 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp9, i32 %readtmp10
+  %4 = getelementptr inbounds %ShaderFile, ptr %idxtmp11, i32 0, i32 1
+  %readtmp12 = load i32, ptr %4, align 4
+  %readtmp13 = load ptr, ptr %files, align 8
+  %readtmp14 = load i32, ptr %count, align 4
+  %idxtmp15 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp13, i32 %readtmp14
+  %5 = getelementptr inbounds %ShaderFile, ptr %idxtmp15, i32 0, i32 0
+  %readtmp16 = load ptr, ptr %5, align 8
+  %calltmp17 = call void @glShaderSource(i32 %readtmp8, i32 %readtmp12, ptr %readtmp16, i32 0)
+  %readtmp18 = load i32, ptr %shader, align 4
+  %calltmp19 = call void @glCompileShader(i32 %readtmp18)
+  %readtmp20 = load ptr, ptr %result, align 8
+  %6 = getelementptr inbounds %Shader, ptr %readtmp20, i32 0, i32 0
+  %readtmp21 = load i32, ptr %6, align 4
+  %readtmp22 = load i32, ptr %shader, align 4
+  %calltmp23 = call void @glAttachShader(i32 %readtmp21, i32 %readtmp22)
+  %readtmp24 = load i32, ptr %count, align 4
+  %gttmp = icmp ugt i32 %readtmp24, 0
+  %docond = icmp ne i1 %gttmp, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  %readtmp25 = load ptr, ptr %result, align 8
+  %7 = getelementptr inbounds %Shader, ptr %readtmp25, i32 0, i32 0
+  %readtmp26 = load i32, ptr %7, align 4
+  %calltmp27 = call void @glLinkProgram(i32 %readtmp26)
+  %readtmp28 = load ptr, ptr %result, align 8
+  ret ptr %readtmp28
+}
+
+define ptr @getPixShaders_0() {
+entry:
+  %result = alloca ptr, align 8
+  %calltmp = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %ShaderFile], ptr null, i32 1) to i32), i32 2)
+  store ptr %calltmp, ptr %result, align 8
+  %readtmp = load ptr, ptr %result, align 8
+  %elemtemp = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp, i32 0, i32 0
+  %0 = getelementptr inbounds %ShaderFile, ptr %elemtemp, i32 0, i32 0
+  %calltmp1 = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x ptr], ptr null, i32 1) to i32), i32 1)
+  store ptr %calltmp1, ptr %0, align 8
+  %readtmp2 = load ptr, ptr %result, align 8
+  %elemtemp3 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp2, i32 0, i32 0
+  %1 = getelementptr inbounds %ShaderFile, ptr %elemtemp3, i32 0, i32 2
+  store i32 35633, ptr %1, align 4
+  %readtmp4 = load ptr, ptr %result, align 8
+  %elemtemp5 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp4, i32 0, i32 0
+  %2 = getelementptr inbounds %ShaderFile, ptr %elemtemp5, i32 0, i32 1
+  store i32 1, ptr %2, align 4
+  %readtmp6 = load ptr, ptr %result, align 8
+  %elemtemp7 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp6, i32 0, i32 0
+  %3 = getelementptr inbounds %ShaderFile, ptr %elemtemp7, i32 0, i32 0
+  %readtmp8 = load ptr, ptr %3, align 8
+  store ptr @str.13, ptr %readtmp8, align 8
+  %readtmp9 = load ptr, ptr %result, align 8
+  %elemtemp10 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp9, i32 0, i32 1
+  %4 = getelementptr inbounds %ShaderFile, ptr %elemtemp10, i32 0, i32 0
+  %calltmp11 = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x ptr], ptr null, i32 1) to i32), i32 1)
+  store ptr %calltmp11, ptr %4, align 8
+  %readtmp12 = load ptr, ptr %result, align 8
+  %elemtemp13 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp12, i32 0, i32 1
+  %5 = getelementptr inbounds %ShaderFile, ptr %elemtemp13, i32 0, i32 2
+  store i32 35632, ptr %5, align 4
+  %readtmp14 = load ptr, ptr %result, align 8
+  %elemtemp15 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp14, i32 0, i32 1
+  %6 = getelementptr inbounds %ShaderFile, ptr %elemtemp15, i32 0, i32 1
+  store i32 1, ptr %6, align 4
+  %readtmp16 = load ptr, ptr %result, align 8
+  %elemtemp17 = getelementptr inbounds [1 x %ShaderFile], ptr %readtmp16, i32 0, i32 1
+  %7 = getelementptr inbounds %ShaderFile, ptr %elemtemp17, i32 0, i32 0
+  %readtmp18 = load ptr, ptr %7, align 8
+  store ptr @str.14, ptr %readtmp18, align 8
+  %readtmp19 = load ptr, ptr %result, align 8
+  ret ptr %readtmp19
+}
+
+define %Vec2 @Vec2.new_0(float %0, float %1) {
+entry:
+  %result = alloca %Vec2, align 8
+  %2 = getelementptr inbounds %Vec2, ptr %result, i32 0, i32 1
+  store float %1, ptr %2, align 4
+  %3 = getelementptr inbounds %Vec2, ptr %result, i32 0, i32 0
+  store float %0, ptr %3, align 4
+  %readtmp = load %Vec2, ptr %result, align 4
+  ret %Vec2 %readtmp
+}
+
+define void @Shader.setSize_0(ptr %0, %Vec2 %1) {
+entry:
+  %proj = alloca %Mat4, align 8
+  %size = alloca %Vec2, align 8
+  %shd = alloca ptr, align 8
+  store %Vec2 %1, ptr %size, align 4
+  store ptr %0, ptr %shd, align 8
+  %readtmp = load %Vec2, ptr %size, align 4
+  %extracted = extractvalue %Vec2 %readtmp, 0
+  %readtmp1 = load %Vec2, ptr %size, align 4
+  %extracted2 = extractvalue %Vec2 %readtmp1, 1
+  %calltmp = call %Mat4 @Mat4.ortho_0(float 0.000000e+00, float %extracted, float %extracted2, float 0.000000e+00, float 1.000000e+02, float -1.000000e+00)
+  store %Mat4 %calltmp, ptr %proj, align 4
+  %readtmp3 = load ptr, ptr %shd, align 8
+  %2 = getelementptr inbounds %Shader, ptr %readtmp3, i32 0, i32 0
+  %readtmp4 = load i32, ptr %2, align 4
+  %calltmp5 = call void @glUseProgram(i32 %readtmp4)
+  %readtmp6 = load ptr, ptr %shd, align 8
+  %3 = getelementptr inbounds %Shader, ptr %readtmp6, i32 0, i32 0
+  %readtmp7 = load i32, ptr %3, align 4
+  %calltmp8 = call i32 @glGetUniformLocation(i32 %readtmp7, ptr @str.15)
+  %4 = getelementptr inbounds %Mat4, ptr %proj, i32 0, i32 0
+  %calltmp9 = call void @glUniformMatrix4fv(i32 %calltmp8, i32 1, i32 0, ptr %4)
+  ret void
+}
+
+define %Mat4 @Mat4.ortho_0(float %0, float %1, float %2, float %3, float %4, float %5) {
+entry:
+  %result = alloca %Mat4, align 8
+  %6 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp = getelementptr inbounds [4 x [4 x float]], ptr %6, i32 0, i32 0
+  %elemtemp1 = getelementptr inbounds [4 x float], ptr %elemtemp, i32 0, i32 0
+  %subtmp = fsub float %1, %0
+  %divtmp = fdiv float 2.000000e+00, %subtmp
+  store float %divtmp, ptr %elemtemp1, align 4
+  %7 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp2 = getelementptr inbounds [4 x [4 x float]], ptr %7, i32 0, i32 0
+  %elemtemp3 = getelementptr inbounds [4 x float], ptr %elemtemp2, i32 0, i32 1
+  store float 0.000000e+00, ptr %elemtemp3, align 4
+  %8 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp4 = getelementptr inbounds [4 x [4 x float]], ptr %8, i32 0, i32 0
+  %elemtemp5 = getelementptr inbounds [4 x float], ptr %elemtemp4, i32 0, i32 2
+  store float 0.000000e+00, ptr %elemtemp5, align 4
+  %9 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp6 = getelementptr inbounds [4 x [4 x float]], ptr %9, i32 0, i32 0
+  %elemtemp7 = getelementptr inbounds [4 x float], ptr %elemtemp6, i32 0, i32 3
+  store float 0.000000e+00, ptr %elemtemp7, align 4
+  %10 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp8 = getelementptr inbounds [4 x [4 x float]], ptr %10, i32 0, i32 1
+  %elemtemp9 = getelementptr inbounds [4 x float], ptr %elemtemp8, i32 0, i32 0
+  store float 0.000000e+00, ptr %elemtemp9, align 4
+  %11 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp10 = getelementptr inbounds [4 x [4 x float]], ptr %11, i32 0, i32 1
+  %elemtemp11 = getelementptr inbounds [4 x float], ptr %elemtemp10, i32 0, i32 1
+  %subtmp12 = fsub float %3, %2
+  %divtmp13 = fdiv float 2.000000e+00, %subtmp12
+  store float %divtmp13, ptr %elemtemp11, align 4
+  %12 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp14 = getelementptr inbounds [4 x [4 x float]], ptr %12, i32 0, i32 1
+  %elemtemp15 = getelementptr inbounds [4 x float], ptr %elemtemp14, i32 0, i32 2
+  store float 0.000000e+00, ptr %elemtemp15, align 4
+  %13 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp16 = getelementptr inbounds [4 x [4 x float]], ptr %13, i32 0, i32 1
+  %elemtemp17 = getelementptr inbounds [4 x float], ptr %elemtemp16, i32 0, i32 3
+  store float 0.000000e+00, ptr %elemtemp17, align 4
+  %14 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp18 = getelementptr inbounds [4 x [4 x float]], ptr %14, i32 0, i32 2
+  %elemtemp19 = getelementptr inbounds [4 x float], ptr %elemtemp18, i32 0, i32 0
+  store float 0.000000e+00, ptr %elemtemp19, align 4
+  %15 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp20 = getelementptr inbounds [4 x [4 x float]], ptr %15, i32 0, i32 2
+  %elemtemp21 = getelementptr inbounds [4 x float], ptr %elemtemp20, i32 0, i32 1
+  store float 0.000000e+00, ptr %elemtemp21, align 4
+  %16 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp22 = getelementptr inbounds [4 x [4 x float]], ptr %16, i32 0, i32 2
+  %elemtemp23 = getelementptr inbounds [4 x float], ptr %elemtemp22, i32 0, i32 2
+  %subtmp24 = fsub float %5, %4
+  %divtmp25 = fdiv float -2.000000e+00, %subtmp24
+  store float %divtmp25, ptr %elemtemp23, align 4
+  %17 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp26 = getelementptr inbounds [4 x [4 x float]], ptr %17, i32 0, i32 2
+  %elemtemp27 = getelementptr inbounds [4 x float], ptr %elemtemp26, i32 0, i32 3
+  store float 0.000000e+00, ptr %elemtemp27, align 4
+  %18 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp28 = getelementptr inbounds [4 x [4 x float]], ptr %18, i32 0, i32 3
+  %elemtemp29 = getelementptr inbounds [4 x float], ptr %elemtemp28, i32 0, i32 0
+  %addtmp = fadd float %1, %0
+  %multmp = fmul float %addtmp, -1.000000e+00
+  %subtmp30 = fsub float %1, %0
+  %divtmp31 = fdiv float %multmp, %subtmp30
+  store float %divtmp31, ptr %elemtemp29, align 4
+  %19 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp32 = getelementptr inbounds [4 x [4 x float]], ptr %19, i32 0, i32 3
+  %elemtemp33 = getelementptr inbounds [4 x float], ptr %elemtemp32, i32 0, i32 1
+  %addtmp34 = fadd float %3, %2
+  %multmp35 = fmul float %addtmp34, -1.000000e+00
+  %subtmp36 = fsub float %3, %2
+  %divtmp37 = fdiv float %multmp35, %subtmp36
+  store float %divtmp37, ptr %elemtemp33, align 4
+  %20 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp38 = getelementptr inbounds [4 x [4 x float]], ptr %20, i32 0, i32 3
+  %elemtemp39 = getelementptr inbounds [4 x float], ptr %elemtemp38, i32 0, i32 2
+  %addtmp40 = fadd float %5, %4
+  %multmp41 = fmul float %addtmp40, -1.000000e+00
+  %subtmp42 = fsub float %5, %4
+  %divtmp43 = fdiv float %multmp41, %subtmp42
+  store float %divtmp43, ptr %elemtemp39, align 4
+  %21 = getelementptr inbounds %Mat4, ptr %result, i32 0, i32 0
+  %elemtemp44 = getelementptr inbounds [4 x [4 x float]], ptr %21, i32 0, i32 3
+  %elemtemp45 = getelementptr inbounds [4 x float], ptr %elemtemp44, i32 0, i32 3
+  store float 1.000000e+00, ptr %elemtemp45, align 4
+  %readtmp = load %Mat4, ptr %result, align 4
+  ret %Mat4 %readtmp
+}
+
+define void @SpriteBatch.init_0(ptr %0) {
+entry:
+  %1 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 3
+  store i32 0, ptr %1, align 4
+  %2 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 2
+  %calltmp = call ptr @malloc(i32 0)
+  store ptr %calltmp, ptr %2, align 8
+  %3 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 1
+  %calltmp1 = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %SBQueue], ptr null, i32 1) to i32))
+  store ptr %calltmp1, ptr %3, align 8
+  %4 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 0
+  %calltmp2 = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %SBQueue], ptr null, i32 1) to i32))
+  store ptr %calltmp2, ptr %4, align 8
+  %5 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 1
+  %readtmp = load ptr, ptr %5, align 8
+  %6 = getelementptr inbounds %SBQueue, ptr %readtmp, i32 0, i32 1
+  store i32 0, ptr %6, align 4
+  %7 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 0
+  %readtmp3 = load ptr, ptr %7, align 8
+  %8 = getelementptr inbounds %SBQueue, ptr %readtmp3, i32 0, i32 1
+  store i32 0, ptr %8, align 4
+  %9 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 1
+  %readtmp4 = load ptr, ptr %9, align 8
+  %10 = getelementptr inbounds %SBQueue, ptr %readtmp4, i32 0, i32 0
+  %calltmp5 = call ptr @malloc(i32 10)
+  store ptr %calltmp5, ptr %10, align 8
+  %11 = getelementptr inbounds %SpriteBatch, ptr %0, i32 0, i32 0
+  %readtmp6 = load ptr, ptr %11, align 8
+  %12 = getelementptr inbounds %SBQueue, ptr %readtmp6, i32 0, i32 0
+  %calltmp7 = call ptr @malloc(i32 10)
+  store ptr %calltmp7, ptr %12, align 8
+  ret void
+}
+
+define %GameState @GameState.init_0([2 x ptr] %0) {
+entry:
+  %result = alloca %GameState, align 8
+  %shd = alloca [2 x ptr], align 8
+  store [2 x ptr] %0, ptr %shd, align 8
+  %1 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 1
+  %elemtemp = getelementptr inbounds [2 x ptr], ptr %1, i32 0, i32 0
+  %calltmp = call ptr @Texture.new_0(ptr @str.16)
+  store ptr %calltmp, ptr %elemtemp, align 8
+  %2 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 1
+  %elemtemp1 = getelementptr inbounds [2 x ptr], ptr %2, i32 0, i32 1
+  %calltmp2 = call ptr @Texture.new_0(ptr @str.17)
+  store ptr %calltmp2, ptr %elemtemp1, align 8
+  %3 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %4 = getelementptr inbounds %MultiSprite, ptr %3, i32 0, i32 0
+  %5 = getelementptr inbounds %Vec2, ptr %4, i32 0, i32 0
+  store float 6.400000e+01, ptr %5, align 4
+  %6 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %7 = getelementptr inbounds %MultiSprite, ptr %6, i32 0, i32 0
+  %8 = getelementptr inbounds %Vec2, ptr %7, i32 0, i32 1
+  store float 6.400000e+01, ptr %8, align 4
+  %9 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %10 = getelementptr inbounds %MultiSprite, ptr %9, i32 0, i32 2
+  %11 = getelementptr inbounds %Vec2, ptr %10, i32 0, i32 0
+  store float 3.000000e+00, ptr %11, align 4
+  %12 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %13 = getelementptr inbounds %MultiSprite, ptr %12, i32 0, i32 2
+  %14 = getelementptr inbounds %Vec2, ptr %13, i32 0, i32 1
+  store float 3.000000e+00, ptr %14, align 4
+  %15 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %16 = getelementptr inbounds %MultiSprite, ptr %15, i32 0, i32 3
+  %17 = getelementptr inbounds %Vec2, ptr %16, i32 0, i32 0
+  store float 1.000000e+00, ptr %17, align 4
+  %18 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %19 = getelementptr inbounds %MultiSprite, ptr %18, i32 0, i32 3
+  %20 = getelementptr inbounds %Vec2, ptr %19, i32 0, i32 1
+  store float 0.000000e+00, ptr %20, align 4
+  %21 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %22 = getelementptr inbounds %MultiSprite, ptr %21, i32 0, i32 1
+  %23 = getelementptr inbounds %Vec2, ptr %22, i32 0, i32 0
+  store float 2.860000e+02, ptr %23, align 4
+  %24 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %25 = getelementptr inbounds %MultiSprite, ptr %24, i32 0, i32 1
+  %26 = getelementptr inbounds %Vec2, ptr %25, i32 0, i32 1
+  store float 3.000000e+02, ptr %26, align 4
+  %27 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 2
+  %28 = getelementptr inbounds %Vec2, ptr %27, i32 0, i32 0
+  store float 0.000000e+00, ptr %28, align 4
+  %29 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 2
+  %30 = getelementptr inbounds %Vec2, ptr %29, i32 0, i32 1
+  store float 0.000000e+00, ptr %30, align 4
+  %31 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %32 = getelementptr inbounds %MultiSprite, ptr %31, i32 0, i32 4
+  %33 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 1
+  %elemtemp3 = getelementptr inbounds [2 x ptr], ptr %33, i32 0, i32 0
+  %readtmp = load ptr, ptr %elemtemp3, align 8
+  store ptr %readtmp, ptr %32, align 8
+  %34 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %35 = getelementptr inbounds %MultiSprite, ptr %34, i32 0, i32 5
+  %elemtemp4 = getelementptr inbounds [2 x ptr], ptr %shd, i32 0, i32 0
+  %readtmp5 = load ptr, ptr %elemtemp4, align 8
+  store ptr %readtmp5, ptr %35, align 8
+  %36 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 3
+  %37 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 1
+  %elemtemp6 = getelementptr inbounds [2 x ptr], ptr %37, i32 0, i32 1
+  %readtmp7 = load ptr, ptr %elemtemp6, align 8
+  %elemtemp8 = getelementptr inbounds [2 x ptr], ptr %shd, i32 0, i32 0
+  %readtmp9 = load ptr, ptr %elemtemp8, align 8
+  %calltmp10 = call %BulletManager @BulletManager.new_0(ptr %readtmp7, ptr %readtmp9)
+  store %BulletManager %calltmp10, ptr %36, align 8
+  %38 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 4
+  %elemtemp11 = getelementptr inbounds [2 x ptr], ptr %shd, i32 0, i32 1
+  %readtmp12 = load ptr, ptr %elemtemp11, align 8
+  %calltmp13 = call %Stars @Stars.init_0(ptr %readtmp12)
+  store %Stars %calltmp13, ptr %38, align 8
+  %readtmp14 = load %GameState, ptr %result, align 8
+  ret %GameState %readtmp14
+}
+
+define ptr @Texture.new_0(ptr %0) {
+entry:
+  %result = alloca ptr, align 8
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Texture], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr %result, align 8
+  %channels = alloca i32, align 4
+  %readtmp = load ptr, ptr %result, align 8
+  %1 = getelementptr inbounds %Texture, ptr %readtmp, i32 0, i32 1
+  %2 = getelementptr inbounds %IVec2, ptr %1, i32 0, i32 0
+  %readtmp1 = load ptr, ptr %result, align 8
+  %3 = getelementptr inbounds %Texture, ptr %readtmp1, i32 0, i32 1
+  %4 = getelementptr inbounds %IVec2, ptr %3, i32 0, i32 1
+  %calltmp2 = call ptr @stbi_load(ptr %0, ptr %2, ptr %4, ptr %channels, i32 4)
+  %readtmp3 = load ptr, ptr %result, align 8
+  %5 = getelementptr inbounds %Texture, ptr %readtmp3, i32 0, i32 0
+  %calltmp4 = call void @glGenTextures(i32 1, ptr %5)
+  %readtmp5 = load ptr, ptr %result, align 8
+  %6 = getelementptr inbounds %Texture, ptr %readtmp5, i32 0, i32 0
+  %readtmp6 = load i32, ptr %6, align 4
+  %calltmp7 = call void @glBindTexture(i32 3553, i32 %readtmp6)
+  %calltmp8 = call void @glTexParameteri(i32 3553, i32 10240, i32 9728)
+  %calltmp9 = call void @glTexParameteri(i32 3553, i32 10241, i32 9728)
+  %calltmp10 = call void @glTexParameteri(i32 3553, i32 10242, i32 33071)
+  %calltmp11 = call void @glTexParameteri(i32 3553, i32 10243, i32 33071)
+  %readtmp12 = load ptr, ptr %result, align 8
+  %7 = getelementptr inbounds %Texture, ptr %readtmp12, i32 0, i32 1
+  %8 = getelementptr inbounds %IVec2, ptr %7, i32 0, i32 0
+  %readtmp13 = load i32, ptr %8, align 4
+  %readtmp14 = load ptr, ptr %result, align 8
+  %9 = getelementptr inbounds %Texture, ptr %readtmp14, i32 0, i32 1
+  %10 = getelementptr inbounds %IVec2, ptr %9, i32 0, i32 1
+  %readtmp15 = load i32, ptr %10, align 4
+  %calltmp16 = call void @glTexImage2D(i32 3553, i32 0, i32 6408, i32 %readtmp13, i32 %readtmp15, i32 0, i32 6408, i32 5121, ptr %calltmp2)
+  %calltmp17 = call void @stbi_image_free(ptr %calltmp2)
+  %readtmp18 = load ptr, ptr %result, align 8
+  ret ptr %readtmp18
+}
+
+define %BulletManager @BulletManager.new_0(ptr %0, ptr %1) {
+entry:
+  %result = alloca %BulletManager, align 8
+  %2 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 1
+  store i32 0, ptr %2, align 4
+  %3 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 0
+  %calltmp = call ptr @malloc(i32 10)
+  store ptr %calltmp, ptr %3, align 8
+  %4 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 3
+  store ptr %1, ptr %4, align 8
+  %5 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 2
+  store ptr %0, ptr %5, align 8
+  %readtmp = load %BulletManager, ptr %result, align 8
+  ret %BulletManager %readtmp
+}
+
+define %Stars @Stars.init_0(ptr %0) {
+entry:
+  %result = alloca %Stars, align 8
+  %1 = getelementptr inbounds %Stars, ptr %result, i32 0, i32 3
+  store ptr %0, ptr %1, align 8
+  %2 = getelementptr inbounds %Stars, ptr %result, i32 0, i32 2
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Texture], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr %2, align 8
+  %calltmp1 = call void @setuprand()
+  %idx = alloca i32, align 4
+  store i32 0, ptr %idx, align 4
+  br label %dobody
+
+dobody:                                           ; preds = %dobody, %entry
+  %3 = getelementptr inbounds %Stars, ptr %result, i32 0, i32 1
+  %readtmp = load i32, ptr %idx, align 4
+  %multmp = mul i32 %readtmp, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp2 = call ptr @mem.add_0(ptr %3, i32 %multmp)
+  %4 = getelementptr inbounds %Star, ptr %calltmp2, i32 0, i32 2
+  %calltmp3 = call float @randf()
+  %multmp4 = fmul float %calltmp3, 6.400000e+02
+  %calltmp5 = call float @randf()
+  %multmp6 = fmul float %calltmp5, 4.800000e+02
+  %calltmp7 = call %Vec2 @Vec2.new_0(float %multmp4, float %multmp6)
+  store %Vec2 %calltmp7, ptr %4, align 4
+  %5 = getelementptr inbounds %Stars, ptr %result, i32 0, i32 1
+  %readtmp8 = load i32, ptr %idx, align 4
+  %multmp9 = mul i32 %readtmp8, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp10 = call ptr @mem.add_0(ptr %5, i32 %multmp9)
+  %6 = getelementptr inbounds %Star, ptr %calltmp10, i32 0, i32 0
+  %calltmp11 = call float @randf()
+  %multmp12 = fmul float %calltmp11, 1.000000e+01
+  %addtmp = fadd float %multmp12, 3.000000e+00
+  store float %addtmp, ptr %6, align 4
+  %7 = getelementptr inbounds %Stars, ptr %result, i32 0, i32 1
+  %readtmp13 = load i32, ptr %idx, align 4
+  %multmp14 = mul i32 %readtmp13, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp15 = call ptr @mem.add_0(ptr %7, i32 %multmp14)
+  %8 = getelementptr inbounds %Star, ptr %calltmp15, i32 0, i32 3
+  %calltmp16 = call %Color @Color.new_0(float 0x3FE3333340000000, float 0x3FE6666660000000, float 0.000000e+00, float 1.000000e+00)
+  %calltmp17 = call %Color @Color.new_0(float 1.000000e+00, float 0.000000e+00, float 0.000000e+00, float 1.000000e+00)
+  %calltmp18 = call float @randf()
+  %calltmp19 = call %Color @Color.mix_0(%Color %calltmp16, %Color %calltmp17, float %calltmp18)
+  %calltmp20 = call %Color @Color.new_0(float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00)
+  %calltmp21 = call float @randf()
+  %calltmp22 = call %Color @Color.mix_0(%Color %calltmp19, %Color %calltmp20, float %calltmp21)
+  store %Color %calltmp22, ptr %8, align 4
+  %readtmp23 = load i32, ptr %idx, align 4
+  %addtmp24 = add i32 %readtmp23, 1
+  store i32 %addtmp24, ptr %idx, align 4
+  %readtmp25 = load i32, ptr %idx, align 4
+  %lttmp = icmp ult i32 %readtmp25, 100
+  %docond = icmp ne i1 %lttmp, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  %9 = getelementptr inbounds %Stars, ptr %result, i32 0, i32 0
+  %calltmp26 = call void @glGenBuffers(i32 1, ptr %9)
+  %readtmp27 = load %Stars, ptr %result, align 8
+  ret %Stars %readtmp27
+}
+
+define ptr @mem.add_0(ptr %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, ptr %0
+  ret i32 %addtmp
+}
+
+define %Color @Color.new_0(float %0, float %1, float %2, float %3) {
+entry:
+  %result = alloca %Color, align 8
+  %4 = getelementptr inbounds %Color, ptr %result, i32 0, i32 3
+  store float %3, ptr %4, align 4
+  %5 = getelementptr inbounds %Color, ptr %result, i32 0, i32 2
+  store float %2, ptr %5, align 4
+  %6 = getelementptr inbounds %Color, ptr %result, i32 0, i32 1
+  store float %1, ptr %6, align 4
+  %7 = getelementptr inbounds %Color, ptr %result, i32 0, i32 0
+  store float %0, ptr %7, align 4
+  %readtmp = load %Color, ptr %result, align 4
+  ret %Color %readtmp
+}
+
+define %Color @Color.mix_0(%Color %0, %Color %1, float %2) {
+entry:
+  %pc = alloca float, align 4
+  %a = alloca %Color, align 8
+  %b = alloca %Color, align 8
+  %result = alloca %Color, align 8
+  store float %2, ptr %pc, align 4
+  store %Color %1, ptr %b, align 4
+  store %Color %0, ptr %a, align 4
+  %3 = getelementptr inbounds %Color, ptr %result, i32 0, i32 0
+  %4 = getelementptr inbounds %Color, ptr %a, i32 0, i32 0
+  %readtmp = load float, ptr %4, align 4
+  %readtmp1 = load float, ptr %pc, align 4
+  %multmp = fmul float %readtmp, %readtmp1
+  %5 = getelementptr inbounds %Color, ptr %b, i32 0, i32 0
+  %readtmp2 = load float, ptr %5, align 4
+  %readtmp3 = load float, ptr %pc, align 4
+  %subtmp = fsub float 1.000000e+00, %readtmp3
+  %multmp4 = fmul float %readtmp2, %subtmp
+  %addtmp = fadd float %multmp, %multmp4
+  store float %addtmp, ptr %3, align 4
+  %6 = getelementptr inbounds %Color, ptr %result, i32 0, i32 1
+  %7 = getelementptr inbounds %Color, ptr %a, i32 0, i32 1
+  %readtmp5 = load float, ptr %7, align 4
+  %readtmp6 = load float, ptr %pc, align 4
+  %multmp7 = fmul float %readtmp5, %readtmp6
+  %8 = getelementptr inbounds %Color, ptr %b, i32 0, i32 1
+  %readtmp8 = load float, ptr %8, align 4
+  %readtmp9 = load float, ptr %pc, align 4
+  %subtmp10 = fsub float 1.000000e+00, %readtmp9
+  %multmp11 = fmul float %readtmp8, %subtmp10
+  %addtmp12 = fadd float %multmp7, %multmp11
+  store float %addtmp12, ptr %6, align 4
+  %9 = getelementptr inbounds %Color, ptr %result, i32 0, i32 2
+  %10 = getelementptr inbounds %Color, ptr %a, i32 0, i32 2
+  %readtmp13 = load float, ptr %10, align 4
+  %readtmp14 = load float, ptr %pc, align 4
+  %multmp15 = fmul float %readtmp13, %readtmp14
+  %11 = getelementptr inbounds %Color, ptr %b, i32 0, i32 2
+  %readtmp16 = load float, ptr %11, align 4
+  %readtmp17 = load float, ptr %pc, align 4
+  %subtmp18 = fsub float 1.000000e+00, %readtmp17
+  %multmp19 = fmul float %readtmp16, %subtmp18
+  %addtmp20 = fadd float %multmp15, %multmp19
+  store float %addtmp20, ptr %9, align 4
+  %12 = getelementptr inbounds %Color, ptr %result, i32 0, i32 3
+  %13 = getelementptr inbounds %Color, ptr %a, i32 0, i32 3
+  %readtmp21 = load float, ptr %13, align 4
+  %readtmp22 = load float, ptr %pc, align 4
+  %multmp23 = fmul float %readtmp21, %readtmp22
+  %14 = getelementptr inbounds %Color, ptr %b, i32 0, i32 3
+  %readtmp24 = load float, ptr %14, align 4
+  %readtmp25 = load float, ptr %pc, align 4
+  %subtmp26 = fsub float 1.000000e+00, %readtmp25
+  %multmp27 = fmul float %readtmp24, %subtmp26
+  %addtmp28 = fadd float %multmp23, %multmp27
+  store float %addtmp28, ptr %12, align 4
+  %readtmp29 = load %Color, ptr %result, align 4
+  ret %Color %readtmp29
+}
+
+define void @loop_0() {
+entry:
+  %newTime = alloca float, align 4
+  %frameTime = alloca float, align 4
+  %calltmp = call float @getTimeFloat()
+  store float %calltmp, ptr %newTime, align 4
+  %readtmp = load float, ptr %newTime, align 4
+  %readtmp1 = load float, ptr @globalPtr.3, align 4
+  %subtmp = fsub float %readtmp, %readtmp1
+  store float %subtmp, ptr %frameTime, align 4
+  %readtmp2 = load float, ptr %frameTime, align 4
+  %gttmp = fcmp uge float %readtmp2, 2.500000e-01
+  %ifcond = icmp ne i1 %gttmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  store float 2.500000e-01, ptr %frameTime, align 4
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %entry
+  %readtmp3 = load float, ptr %newTime, align 4
+  store float %readtmp3, ptr @globalPtr.3, align 4
+  %readtmp4 = load float, ptr @globalPtr.4, align 4
+  %readtmp5 = load float, ptr %frameTime, align 4
+  %addtmp = fadd float %readtmp4, %readtmp5
+  store float %addtmp, ptr @globalPtr.4, align 4
+  %readtmp6 = load float, ptr @globalPtr.4, align 4
+  %readtmp7 = load float, ptr @globalPtr.2, align 4
+  %lttmp = fcmp ule float %readtmp6, %readtmp7
+  %nottmp = xor i1 %lttmp, true
+  %ifcond8 = icmp ne i1 %nottmp, false
+  br i1 %ifcond8, label %ifbody9, label %ifmerge10
+
+ifbody9:                                          ; preds = %ifmerge
+  br label %dobody
+
+ifmerge10:                                        ; preds = %domerge, %ifmerge
+  %state = alloca %GameState, align 8
+  %alpha = alloca float, align 4
+  %readtmp28 = load float, ptr @globalPtr.4, align 4
+  %readtmp29 = load float, ptr @globalPtr.2, align 4
+  %divtmp = fdiv float %readtmp28, %readtmp29
+  store float %divtmp, ptr %alpha, align 4
+  %readtmp30 = load float, ptr %alpha, align 4
+  %calltmp31 = call void @GameState.lerp_0(ptr %state, ptr @globalPtr.6, ptr @globalPtr.5, float %readtmp30)
+  %calltmp32 = call void @GameState.draw_0(ptr %state, ptr @globalPtr.7)
+  %readtmp33 = load ptr, ptr @globalPtr.8, align 8
+  %calltmp34 = call void @GFXContext.clear_0(ptr %readtmp33)
+  %calltmp35 = call void @SpriteBatch.finish_0(ptr @globalPtr.7)
+  %readtmp36 = load ptr, ptr @globalPtr.8, align 8
+  %calltmp37 = call void @GFXContext.swap_0(ptr %readtmp36)
+  %readtmp38 = load ptr, ptr @globalPtr.8, align 8
+  %calltmp39 = call i1 @GFXContext.poll_0(ptr %readtmp38)
+  ret void
+
+dobody:                                           ; preds = %dobody, %ifbody9
+  %readtmp11 = load %GameState, ptr @globalPtr.6, align 8
+  %calltmp12 = call void @GameState.free_0(%GameState %readtmp11)
+  %readtmp13 = load %GameState, ptr @globalPtr.5, align 8
+  %calltmp14 = call %GameState @GameState.copy_0(%GameState %readtmp13)
+  store %GameState %calltmp14, ptr @globalPtr.6, align 8
+  %readtmp15 = load float, ptr @globalPtr.1, align 4
+  %readtmp16 = load float, ptr @globalPtr.2, align 4
+  %calltmp17 = call void @GameState.update_0(ptr @globalPtr.5, float %readtmp15, float %readtmp16)
+  %readtmp18 = load float, ptr @globalPtr.1, align 4
+  %readtmp19 = load float, ptr @globalPtr.2, align 4
+  %addtmp20 = fadd float %readtmp18, %readtmp19
+  store float %addtmp20, ptr @globalPtr.1, align 4
+  %readtmp21 = load float, ptr @globalPtr.4, align 4
+  %readtmp22 = load float, ptr @globalPtr.2, align 4
+  %subtmp23 = fsub float %readtmp21, %readtmp22
+  store float %subtmp23, ptr @globalPtr.4, align 4
+  %readtmp24 = load float, ptr @globalPtr.4, align 4
+  %readtmp25 = load float, ptr @globalPtr.2, align 4
+  %lttmp26 = fcmp ule float %readtmp24, %readtmp25
+  %nottmp27 = xor i1 %lttmp26, true
+  %docond = icmp ne i1 %nottmp27, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  br label %ifmerge10
+}
+
+define void @GameState.free_0(%GameState %0) {
+entry:
+  %extracted = extractvalue %GameState %0, 3
+  %calltmp = call void @BulletManager.free_0(%BulletManager %extracted)
+  ret void
+}
+
+define void @BulletManager.free_0(%BulletManager %0) {
+entry:
+  %extracted = extractvalue %BulletManager %0, 0
+  %calltmp = call void @free(ptr %extracted)
+  ret void
+}
+
+define %GameState @GameState.copy_0(%GameState %0) {
+entry:
+  %result = alloca %GameState, align 8
+  %input = alloca %GameState, align 8
+  store %GameState %0, ptr %input, align 8
+  %readtmp = load %GameState, ptr %input, align 8
+  store %GameState %readtmp, ptr %result, align 8
+  %1 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 3
+  %readtmp1 = load %GameState, ptr %input, align 8
+  %extracted = extractvalue %GameState %readtmp1, 3
+  %calltmp = call %BulletManager @BulletManager.copy_0(%BulletManager %extracted)
+  store %BulletManager %calltmp, ptr %1, align 8
+  %readtmp2 = load %GameState, ptr %result, align 8
+  ret %GameState %readtmp2
+}
+
+define %BulletManager @BulletManager.copy_0(%BulletManager %0) {
+entry:
+  %result = alloca %BulletManager, align 8
+  %input = alloca %BulletManager, align 8
+  store %BulletManager %0, ptr %input, align 8
+  %1 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 1
+  %2 = getelementptr inbounds %BulletManager, ptr %input, i32 0, i32 1
+  %readtmp = load i32, ptr %2, align 4
+  store i32 %readtmp, ptr %1, align 4
+  %3 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 0
+  %4 = getelementptr inbounds %BulletManager, ptr %input, i32 0, i32 1
+  %readtmp1 = load i32, ptr %4, align 4
+  %multmp = mul i32 %readtmp1, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp = call ptr @malloc(i32 %multmp)
+  store ptr %calltmp, ptr %3, align 8
+  %5 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 3
+  %6 = getelementptr inbounds %BulletManager, ptr %input, i32 0, i32 3
+  %readtmp2 = load ptr, ptr %6, align 8
+  store ptr %readtmp2, ptr %5, align 8
+  %7 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 2
+  %8 = getelementptr inbounds %BulletManager, ptr %input, i32 0, i32 2
+  %readtmp3 = load ptr, ptr %8, align 8
+  store ptr %readtmp3, ptr %7, align 8
+  %9 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 0
+  %readtmp4 = load ptr, ptr %9, align 8
+  %10 = getelementptr inbounds %BulletManager, ptr %input, i32 0, i32 0
+  %readtmp5 = load ptr, ptr %10, align 8
+  %11 = getelementptr inbounds %BulletManager, ptr %input, i32 0, i32 1
+  %readtmp6 = load i32, ptr %11, align 4
+  %multmp7 = mul i32 %readtmp6, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp8 = call i32 @memcpy(ptr %readtmp4, ptr %readtmp5, i32 %multmp7)
+  %readtmp9 = load %BulletManager, ptr %result, align 8
+  ret %BulletManager %readtmp9
+}
+
+define void @GameState.update_0(ptr %0, float %1, float %2) {
+entry:
+  %adt = alloca float, align 4
+  %at = alloca float, align 4
+  %state = alloca ptr, align 8
+  store float %2, ptr %adt, align 4
+  store float %1, ptr %at, align 4
+  store ptr %0, ptr %state, align 8
+  %readtmp = load ptr, ptr %state, align 8
+  %3 = getelementptr inbounds %GameState, ptr %readtmp, i32 0, i32 2
+  %readtmp1 = load ptr, ptr %state, align 8
+  %4 = getelementptr inbounds %GameState, ptr %readtmp1, i32 0, i32 2
+  %readtmp2 = load %Vec2, ptr %4, align 4
+  %calltmp = call %Vec2 @Vec2.mul_0(%Vec2 %readtmp2, float 0x3FECCCCCC0000000)
+  store %Vec2 %calltmp, ptr %3, align 4
+  %readtmp3 = load ptr, ptr %state, align 8
+  %5 = getelementptr inbounds %GameState, ptr %readtmp3, i32 0, i32 2
+  %readtmp4 = load ptr, ptr %state, align 8
+  %6 = getelementptr inbounds %GameState, ptr %readtmp4, i32 0, i32 2
+  %readtmp5 = load %Vec2, ptr %6, align 4
+  %calltmp6 = call ptr @Input.instance_0()
+  %readtmp7 = load %Input, ptr %calltmp6, align 4
+  %extracted = extractvalue %Input %readtmp7, 0
+  %readtmp8 = load float, ptr %adt, align 4
+  %multmp = fmul float 2.000000e+03, %readtmp8
+  %calltmp9 = call %Vec2 @Vec2.mul_0(%Vec2 %extracted, float %multmp)
+  %calltmp10 = call %Vec2 @Vec2.add_0(%Vec2 %readtmp5, %Vec2 %calltmp9)
+  store %Vec2 %calltmp10, ptr %5, align 4
+  %calltmp11 = call ptr @Input.instance_0()
+  %7 = getelementptr inbounds %Input, ptr %calltmp11, i32 0, i32 1
+  %readtmp12 = load i1, ptr %7, align 1
+  %ifcond = icmp ne i1 %readtmp12, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  %readtmp13 = load ptr, ptr %state, align 8
+  %8 = getelementptr inbounds %GameState, ptr %readtmp13, i32 0, i32 3
+  %readtmp14 = load ptr, ptr %state, align 8
+  %9 = getelementptr inbounds %GameState, ptr %readtmp14, i32 0, i32 0
+  %10 = getelementptr inbounds %MultiSprite, ptr %9, i32 0, i32 1
+  %readtmp15 = load %Vec2, ptr %10, align 4
+  %calltmp16 = call %Vec2 @Vec2.new_0(float 3.200000e+01, float 1.600000e+01)
+  %calltmp17 = call %Vec2 @Vec2.add_0(%Vec2 %readtmp15, %Vec2 %calltmp16)
+  %calltmp18 = call void @BulletManager.spawn_0(ptr %8, i1 true, %Vec2 %calltmp17)
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %entry
+  %readtmp19 = load ptr, ptr %state, align 8
+  %11 = getelementptr inbounds %GameState, ptr %readtmp19, i32 0, i32 0
+  %12 = getelementptr inbounds %MultiSprite, ptr %11, i32 0, i32 1
+  %13 = getelementptr inbounds %Vec2, ptr %12, i32 0, i32 1
+  %readtmp20 = load ptr, ptr %state, align 8
+  %14 = getelementptr inbounds %GameState, ptr %readtmp20, i32 0, i32 0
+  %15 = getelementptr inbounds %MultiSprite, ptr %14, i32 0, i32 1
+  %16 = getelementptr inbounds %Vec2, ptr %15, i32 0, i32 1
+  %readtmp21 = load float, ptr %16, align 4
+  %readtmp22 = load float, ptr %adt, align 4
+  %readtmp23 = load ptr, ptr %state, align 8
+  %17 = getelementptr inbounds %GameState, ptr %readtmp23, i32 0, i32 2
+  %18 = getelementptr inbounds %Vec2, ptr %17, i32 0, i32 1
+  %readtmp24 = load float, ptr %18, align 4
+  %multmp25 = fmul float %readtmp22, %readtmp24
+  %addtmp = fadd float %readtmp21, %multmp25
+  store float %addtmp, ptr %13, align 4
+  %readtmp26 = load ptr, ptr %state, align 8
+  %19 = getelementptr inbounds %GameState, ptr %readtmp26, i32 0, i32 0
+  %20 = getelementptr inbounds %MultiSprite, ptr %19, i32 0, i32 1
+  %21 = getelementptr inbounds %Vec2, ptr %20, i32 0, i32 0
+  %readtmp27 = load ptr, ptr %state, align 8
+  %22 = getelementptr inbounds %GameState, ptr %readtmp27, i32 0, i32 0
+  %23 = getelementptr inbounds %MultiSprite, ptr %22, i32 0, i32 1
+  %24 = getelementptr inbounds %Vec2, ptr %23, i32 0, i32 0
+  %readtmp28 = load float, ptr %24, align 4
+  %readtmp29 = load float, ptr %adt, align 4
+  %readtmp30 = load ptr, ptr %state, align 8
+  %25 = getelementptr inbounds %GameState, ptr %readtmp30, i32 0, i32 2
+  %26 = getelementptr inbounds %Vec2, ptr %25, i32 0, i32 0
+  %readtmp31 = load float, ptr %26, align 4
+  %multmp32 = fmul float %readtmp29, %readtmp31
+  %addtmp33 = fadd float %readtmp28, %multmp32
+  store float %addtmp33, ptr %21, align 4
+  %readtmp34 = load ptr, ptr %state, align 8
+  %27 = getelementptr inbounds %GameState, ptr %readtmp34, i32 0, i32 3
+  %readtmp35 = load float, ptr %at, align 4
+  %readtmp36 = load float, ptr %adt, align 4
+  %calltmp37 = call void @BulletManager.update_0(ptr %27, float %readtmp35, float %readtmp36)
+  %readtmp38 = load ptr, ptr %state, align 8
+  %28 = getelementptr inbounds %GameState, ptr %readtmp38, i32 0, i32 4
+  %calltmp39 = call void @Stars.update_0(ptr %28)
+  ret void
+}
+
+define void @BulletManager.spawn_0(ptr %0, i1 %1, %Vec2 %2) {
+entry:
+  %self = alloca ptr, align 8
+  %idx = alloca i32, align 4
+  %pos = alloca %Vec2, align 8
+  store %Vec2 %2, ptr %pos, align 4
+  store ptr %0, ptr %self, align 8
+  %readtmp = load ptr, ptr %self, align 8
+  %3 = getelementptr inbounds %BulletManager, ptr %readtmp, i32 0, i32 1
+  %readtmp1 = load i32, ptr %3, align 4
+  store i32 %readtmp1, ptr %idx, align 4
+  %readtmp2 = load ptr, ptr %self, align 8
+  %4 = getelementptr inbounds %BulletManager, ptr %readtmp2, i32 0, i32 0
+  %readtmp3 = load ptr, ptr %self, align 8
+  %5 = getelementptr inbounds %BulletManager, ptr %readtmp3, i32 0, i32 0
+  %readtmp4 = load ptr, ptr %5, align 8
+  %readtmp5 = load i32, ptr %idx, align 4
+  %addtmp = add i32 %readtmp5, 1
+  %multmp = mul i32 %addtmp, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp = call ptr @realloc(ptr %readtmp4, i32 %multmp)
+  store ptr %calltmp, ptr %4, align 8
+  %readtmp6 = load ptr, ptr %self, align 8
+  %6 = getelementptr inbounds %BulletManager, ptr %readtmp6, i32 0, i32 1
+  %readtmp7 = load i32, ptr %idx, align 4
+  %addtmp8 = add i32 %readtmp7, 1
+  store i32 %addtmp8, ptr %6, align 4
+  %added = alloca ptr, align 8
+  %readtmp9 = load ptr, ptr %self, align 8
+  %7 = getelementptr inbounds %BulletManager, ptr %readtmp9, i32 0, i32 0
+  %readtmp10 = load ptr, ptr %7, align 8
+  %readtmp11 = load i32, ptr %idx, align 4
+  %multmp12 = mul i32 %readtmp11, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp13 = call ptr @mem.add_1(ptr %readtmp10, i32 %multmp12)
+  store ptr %calltmp13, ptr %added, align 8
+  %readtmp14 = load ptr, ptr %added, align 8
+  %8 = getelementptr inbounds %Bullet, ptr %readtmp14, i32 0, i32 1
+  store i1 %1, ptr %8, align 1
+  %readtmp15 = load ptr, ptr %added, align 8
+  %9 = getelementptr inbounds %Bullet, ptr %readtmp15, i32 0, i32 0
+  %10 = getelementptr inbounds %Sprite, ptr %9, i32 0, i32 0
+  %11 = getelementptr inbounds %Vec2, ptr %10, i32 0, i32 0
+  store float 1.600000e+01, ptr %11, align 4
+  %readtmp16 = load ptr, ptr %added, align 8
+  %12 = getelementptr inbounds %Bullet, ptr %readtmp16, i32 0, i32 0
+  %13 = getelementptr inbounds %Sprite, ptr %12, i32 0, i32 0
+  %14 = getelementptr inbounds %Vec2, ptr %13, i32 0, i32 1
+  store float 1.600000e+01, ptr %14, align 4
+  %readtmp17 = load ptr, ptr %added, align 8
+  %15 = getelementptr inbounds %Bullet, ptr %readtmp17, i32 0, i32 0
+  %16 = getelementptr inbounds %Sprite, ptr %15, i32 0, i32 1
+  %17 = getelementptr inbounds %Vec2, ptr %16, i32 0, i32 0
+  %18 = getelementptr inbounds %Vec2, ptr %pos, i32 0, i32 0
+  %readtmp18 = load float, ptr %18, align 4
+  %subtmp = fsub float %readtmp18, 8.000000e+00
+  store float %subtmp, ptr %17, align 4
+  %readtmp19 = load ptr, ptr %added, align 8
+  %19 = getelementptr inbounds %Bullet, ptr %readtmp19, i32 0, i32 0
+  %20 = getelementptr inbounds %Sprite, ptr %19, i32 0, i32 1
+  %21 = getelementptr inbounds %Vec2, ptr %20, i32 0, i32 1
+  %22 = getelementptr inbounds %Vec2, ptr %pos, i32 0, i32 1
+  %readtmp20 = load float, ptr %22, align 4
+  %subtmp21 = fsub float %readtmp20, 8.000000e+00
+  store float %subtmp21, ptr %21, align 4
+  %readtmp22 = load ptr, ptr %added, align 8
+  %23 = getelementptr inbounds %Bullet, ptr %readtmp22, i32 0, i32 2
+  %24 = getelementptr inbounds %Vec2, ptr %23, i32 0, i32 0
+  store float 0.000000e+00, ptr %24, align 4
+  %readtmp23 = load ptr, ptr %added, align 8
+  %25 = getelementptr inbounds %Bullet, ptr %readtmp23, i32 0, i32 2
+  %26 = getelementptr inbounds %Vec2, ptr %25, i32 0, i32 1
+  store float -5.000000e+02, ptr %26, align 4
+  ret void
+}
+
+define ptr @mem.add_1(ptr %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, ptr %0
+  ret i32 %addtmp
+}
+
+define void @BulletManager.update_0(ptr %0, float %1, float %2) {
+entry:
+  %self = alloca ptr, align 8
+  %dt = alloca float, align 4
+  %t = alloca float, align 4
+  store float %2, ptr %dt, align 4
+  store float %1, ptr %t, align 4
+  store ptr %0, ptr %self, align 8
+  %idx = alloca i32, align 4
+  store i32 0, ptr %idx, align 4
+  %readtmp = load i32, ptr %idx, align 4
+  %readtmp1 = load ptr, ptr %self, align 8
+  %3 = getelementptr inbounds %BulletManager, ptr %readtmp1, i32 0, i32 1
+  %readtmp2 = load i32, ptr %3, align 4
+  %lttmp = icmp ult i32 %readtmp, %readtmp2
+  %ifcond = icmp ne i1 %lttmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  br label %dobody
+
+ifmerge:                                          ; preds = %domerge, %entry
+  ret void
+
+dobody:                                           ; preds = %dobody, %ifbody
+  %readtmp3 = load ptr, ptr %self, align 8
+  %4 = getelementptr inbounds %BulletManager, ptr %readtmp3, i32 0, i32 0
+  %readtmp4 = load ptr, ptr %4, align 8
+  %readtmp5 = load i32, ptr %idx, align 4
+  %multmp = mul i32 %readtmp5, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp = call ptr @mem.add_1(ptr %readtmp4, i32 %multmp)
+  %readtmp6 = load float, ptr %t, align 4
+  %readtmp7 = load float, ptr %dt, align 4
+  %calltmp8 = call void @Bullet.update_0(ptr %calltmp, float %readtmp6, float %readtmp7)
+  %readtmp9 = load i32, ptr %idx, align 4
+  %addtmp = add i32 %readtmp9, 1
+  store i32 %addtmp, ptr %idx, align 4
+  %readtmp10 = load i32, ptr %idx, align 4
+  %readtmp11 = load ptr, ptr %self, align 8
+  %5 = getelementptr inbounds %BulletManager, ptr %readtmp11, i32 0, i32 1
+  %readtmp12 = load i32, ptr %5, align 4
+  %lttmp13 = icmp ult i32 %readtmp10, %readtmp12
+  %docond = icmp ne i1 %lttmp13, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  br label %ifmerge
+}
+
+define void @Bullet.update_0(ptr %0, float %1, float %2) {
+entry:
+  %dt = alloca float, align 4
+  %t = alloca float, align 4
+  %self = alloca ptr, align 8
+  store float %2, ptr %dt, align 4
+  store float %1, ptr %t, align 4
+  store ptr %0, ptr %self, align 8
+  %readtmp = load ptr, ptr %self, align 8
+  %3 = getelementptr inbounds %Bullet, ptr %readtmp, i32 0, i32 0
+  %4 = getelementptr inbounds %Sprite, ptr %3, i32 0, i32 1
+  %readtmp1 = load %Vec2, ptr %4, align 4
+  %readtmp2 = load ptr, ptr %self, align 8
+  %5 = getelementptr inbounds %Bullet, ptr %readtmp2, i32 0, i32 2
+  %readtmp3 = load %Vec2, ptr %5, align 4
+  %readtmp4 = load float, ptr %dt, align 4
+  %calltmp = call %Vec2 @Vec2.mul_0(%Vec2 %readtmp3, float %readtmp4)
+  %calltmp5 = call %Vec2 @Vec2.add_0(%Vec2 %readtmp1, %Vec2 %calltmp)
+  store %Vec2 %calltmp5, ptr %4, align 4
+  ret void
+}
+
+define void @Stars.update_0(ptr %0) {
+entry:
+  %self = alloca ptr, align 8
+  store ptr %0, ptr %self, align 8
+  %idx = alloca i32, align 4
+  store i32 0, ptr %idx, align 4
+  br label %dobody
+
+dobody:                                           ; preds = %ifmerge, %entry
+  %current = alloca ptr, align 8
+  %readtmp = load ptr, ptr %self, align 8
+  %1 = getelementptr inbounds %Stars, ptr %readtmp, i32 0, i32 1
+  %readtmp1 = load i32, ptr %idx, align 4
+  %multmp = mul i32 %readtmp1, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp = call ptr @mem.add_0(ptr %1, i32 %multmp)
+  store ptr %calltmp, ptr %current, align 8
+  %readtmp2 = load ptr, ptr %current, align 8
+  %2 = getelementptr inbounds %Star, ptr %readtmp2, i32 0, i32 2
+  %3 = getelementptr inbounds %Vec2, ptr %2, i32 0, i32 1
+  %readtmp3 = load float, ptr %3, align 4
+  %readtmp4 = load ptr, ptr %current, align 8
+  %4 = getelementptr inbounds %Star, ptr %readtmp4, i32 0, i32 0
+  %readtmp5 = load float, ptr %4, align 4
+  %multmp6 = fmul float %readtmp5, 4.000000e+00
+  %addtmp = fadd float %readtmp3, %multmp6
+  store float %addtmp, ptr %3, align 4
+  %readtmp7 = load ptr, ptr %current, align 8
+  %5 = getelementptr inbounds %Star, ptr %readtmp7, i32 0, i32 2
+  %6 = getelementptr inbounds %Vec2, ptr %5, i32 0, i32 1
+  %readtmp8 = load float, ptr %6, align 4
+  %gttmp = fcmp uge float %readtmp8, 4.800000e+02
+  %ifcond = icmp ne i1 %gttmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+domerge:                                          ; preds = %ifmerge
+  ret void
+
+ifbody:                                           ; preds = %dobody
+  %readtmp9 = load ptr, ptr %current, align 8
+  %7 = getelementptr inbounds %Star, ptr %readtmp9, i32 0, i32 2
+  %8 = getelementptr inbounds %Vec2, ptr %7, i32 0, i32 1
+  store float -1.000000e+01, ptr %8, align 4
+  %readtmp10 = load ptr, ptr %current, align 8
+  %9 = getelementptr inbounds %Star, ptr %readtmp10, i32 0, i32 2
+  %10 = getelementptr inbounds %Vec2, ptr %9, i32 0, i32 0
+  %calltmp11 = call float @randf()
+  %multmp12 = fmul float %calltmp11, 6.400000e+02
+  store float %multmp12, ptr %10, align 4
+  %readtmp13 = load ptr, ptr %current, align 8
+  %11 = getelementptr inbounds %Star, ptr %readtmp13, i32 0, i32 0
+  %calltmp14 = call float @randf()
+  %multmp15 = fmul float %calltmp14, 1.000000e+01
+  %addtmp16 = fadd float %multmp15, 3.000000e+00
+  store float %addtmp16, ptr %11, align 4
+  %readtmp17 = load ptr, ptr %current, align 8
+  %12 = getelementptr inbounds %Star, ptr %readtmp17, i32 0, i32 1
+  %readtmp18 = load ptr, ptr %current, align 8
+  %13 = getelementptr inbounds %Star, ptr %readtmp18, i32 0, i32 1
+  %readtmp19 = load i1, ptr %13, align 1
+  %neqtmp = icmp eq i1 false, %readtmp19
+  store i1 %neqtmp, ptr %12, align 1
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %dobody
+  %readtmp20 = load i32, ptr %idx, align 4
+  %addtmp21 = add i32 %readtmp20, 1
+  store i32 %addtmp21, ptr %idx, align 4
+  %readtmp22 = load i32, ptr %idx, align 4
+  %lttmp = icmp ult i32 %readtmp22, 100
+  %docond = icmp ne i1 %lttmp, false
+  br i1 %docond, label %dobody, label %domerge
+}
+
+define void @GameState.lerp_0(ptr %0, ptr %1, ptr %2, float %3) {
+entry:
+  %result = alloca %GameState, align 8
+  %a = alloca %GameState, align 8
+  %b = alloca %GameState, align 8
+  %pc = alloca float, align 4
+  store float %3, ptr %pc, align 4
+  %readtmp = load %GameState, ptr %2, align 8
+  store %GameState %readtmp, ptr %a, align 8
+  %readtmp1 = load %GameState, ptr %1, align 8
+  store %GameState %readtmp1, ptr %b, align 8
+  %readtmp2 = load %GameState, ptr %1, align 8
+  store %GameState %readtmp2, ptr %result, align 8
+  %4 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 0
+  %readtmp3 = load %GameState, ptr %a, align 8
+  %extracted = extractvalue %GameState %readtmp3, 0
+  %readtmp4 = load %GameState, ptr %b, align 8
+  %extracted5 = extractvalue %GameState %readtmp4, 0
+  %readtmp6 = load float, ptr %pc, align 4
+  %calltmp = call void @MultiSprite.lerp_0(ptr %4, %MultiSprite %extracted, %MultiSprite %extracted5, float %readtmp6)
+  %5 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 3
+  %readtmp7 = load %GameState, ptr %a, align 8
+  %extracted8 = extractvalue %GameState %readtmp7, 3
+  %readtmp9 = load %GameState, ptr %b, align 8
+  %extracted10 = extractvalue %GameState %readtmp9, 3
+  %readtmp11 = load float, ptr %pc, align 4
+  %calltmp12 = call void @BulletManager.lerp_0(ptr %5, %BulletManager %extracted8, %BulletManager %extracted10, float %readtmp11)
+  %6 = getelementptr inbounds %GameState, ptr %result, i32 0, i32 4
+  %7 = getelementptr inbounds %GameState, ptr %a, i32 0, i32 4
+  %8 = getelementptr inbounds %GameState, ptr %b, i32 0, i32 4
+  %readtmp13 = load float, ptr %pc, align 4
+  %calltmp14 = call void @Stars.lerp_0(ptr %6, ptr %7, ptr %8, float %readtmp13)
+  %readtmp15 = load %GameState, ptr %result, align 8
+  store %GameState %readtmp15, ptr %0, align 8
+  ret void
+}
+
+define void @MultiSprite.lerp_0(ptr %0, %MultiSprite %1, %MultiSprite %2, float %3) {
+entry:
+  %result = alloca %MultiSprite, align 8
+  %a = alloca %MultiSprite, align 8
+  %b = alloca %MultiSprite, align 8
+  %pc = alloca float, align 4
+  store float %3, ptr %pc, align 4
+  store %MultiSprite %2, ptr %a, align 8
+  store %MultiSprite %1, ptr %b, align 8
+  store %MultiSprite %1, ptr %result, align 8
+  %4 = getelementptr inbounds %MultiSprite, ptr %result, i32 0, i32 1
+  %5 = getelementptr inbounds %MultiSprite, ptr %a, i32 0, i32 1
+  %readtmp = load %Vec2, ptr %5, align 4
+  %6 = getelementptr inbounds %MultiSprite, ptr %b, i32 0, i32 1
+  %readtmp1 = load %Vec2, ptr %6, align 4
+  %readtmp2 = load float, ptr %pc, align 4
+  %calltmp = call %Vec2 @Vec2.lerp_0(%Vec2 %readtmp, %Vec2 %readtmp1, float %readtmp2)
+  store %Vec2 %calltmp, ptr %4, align 4
+  %7 = getelementptr inbounds %MultiSprite, ptr %result, i32 0, i32 0
+  %8 = getelementptr inbounds %MultiSprite, ptr %a, i32 0, i32 0
+  %readtmp3 = load %Vec2, ptr %8, align 4
+  %9 = getelementptr inbounds %MultiSprite, ptr %b, i32 0, i32 0
+  %readtmp4 = load %Vec2, ptr %9, align 4
+  %readtmp5 = load float, ptr %pc, align 4
+  %calltmp6 = call %Vec2 @Vec2.lerp_0(%Vec2 %readtmp3, %Vec2 %readtmp4, float %readtmp5)
+  store %Vec2 %calltmp6, ptr %7, align 4
+  %readtmp7 = load %MultiSprite, ptr %result, align 8
+  store %MultiSprite %readtmp7, ptr %0, align 8
+  ret void
+}
+
+define %Vec2 @Vec2.lerp_0(%Vec2 %0, %Vec2 %1, float %2) {
+entry:
+  %pc = alloca float, align 4
+  store float %2, ptr %pc, align 4
+  %readtmp = load float, ptr %pc, align 4
+  %calltmp = call %Vec2 @Vec2.mul_0(%Vec2 %1, float %readtmp)
+  %readtmp1 = load float, ptr %pc, align 4
+  %subtmp = fsub float 1.000000e+00, %readtmp1
+  %calltmp2 = call %Vec2 @Vec2.mul_0(%Vec2 %0, float %subtmp)
+  %calltmp3 = call %Vec2 @Vec2.add_0(%Vec2 %calltmp, %Vec2 %calltmp2)
+  ret %Vec2 %calltmp3
+}
+
+define void @BulletManager.lerp_0(ptr %0, %BulletManager %1, %BulletManager %2, float %3) {
+entry:
+  %result = alloca %BulletManager, align 8
+  %a = alloca %BulletManager, align 8
+  %b = alloca %BulletManager, align 8
+  %pc = alloca float, align 4
+  store float %3, ptr %pc, align 4
+  store %BulletManager %2, ptr %a, align 8
+  store %BulletManager %1, ptr %b, align 8
+  %calltmp = call %BulletManager @BulletManager.copy_0(%BulletManager %1)
+  store %BulletManager %calltmp, ptr %result, align 8
+  %idx = alloca i32, align 4
+  store i32 0, ptr %idx, align 4
+  %readtmp = load i32, ptr %idx, align 4
+  %4 = getelementptr inbounds %BulletManager, ptr %a, i32 0, i32 1
+  %readtmp1 = load i32, ptr %4, align 4
+  %lttmp = icmp ult i32 %readtmp, %readtmp1
+  %ifcond = icmp ne i1 %lttmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  br label %dobody
+
+ifmerge:                                          ; preds = %domerge, %entry
+  %readtmp21 = load %BulletManager, ptr %result, align 8
+  store %BulletManager %readtmp21, ptr %0, align 8
+  ret void
+
+dobody:                                           ; preds = %dobody, %ifbody
+  %5 = getelementptr inbounds %BulletManager, ptr %result, i32 0, i32 0
+  %readtmp2 = load ptr, ptr %5, align 8
+  %readtmp3 = load i32, ptr %idx, align 4
+  %multmp = mul i32 %readtmp3, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp4 = call ptr @mem.add_1(ptr %readtmp2, i32 %multmp)
+  %6 = getelementptr inbounds %BulletManager, ptr %a, i32 0, i32 0
+  %readtmp5 = load ptr, ptr %6, align 8
+  %readtmp6 = load i32, ptr %idx, align 4
+  %multmp7 = mul i32 %readtmp6, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp8 = call ptr @mem.add_1(ptr %readtmp5, i32 %multmp7)
+  %readtmp9 = load %Bullet, ptr %calltmp8, align 8
+  %7 = getelementptr inbounds %BulletManager, ptr %b, i32 0, i32 0
+  %readtmp10 = load ptr, ptr %7, align 8
+  %readtmp11 = load i32, ptr %idx, align 4
+  %multmp12 = mul i32 %readtmp11, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp13 = call ptr @mem.add_1(ptr %readtmp10, i32 %multmp12)
+  %readtmp14 = load %Bullet, ptr %calltmp13, align 8
+  %readtmp15 = load float, ptr %pc, align 4
+  %calltmp16 = call void @Bullet.lerp_0(ptr %calltmp4, %Bullet %readtmp9, %Bullet %readtmp14, float %readtmp15)
+  %readtmp17 = load i32, ptr %idx, align 4
+  %addtmp = add i32 %readtmp17, 1
+  store i32 %addtmp, ptr %idx, align 4
+  %readtmp18 = load i32, ptr %idx, align 4
+  %8 = getelementptr inbounds %BulletManager, ptr %a, i32 0, i32 1
+  %readtmp19 = load i32, ptr %8, align 4
+  %lttmp20 = icmp ult i32 %readtmp18, %readtmp19
+  %docond = icmp ne i1 %lttmp20, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  br label %ifmerge
+}
+
+define void @Bullet.lerp_0(ptr %0, %Bullet %1, %Bullet %2, float %3) {
+entry:
+  %result = alloca %Bullet, align 8
+  %a = alloca %Bullet, align 8
+  %b = alloca %Bullet, align 8
+  %pc = alloca float, align 4
+  store float %3, ptr %pc, align 4
+  store %Bullet %2, ptr %a, align 8
+  store %Bullet %1, ptr %b, align 8
+  store %Bullet %1, ptr %result, align 8
+  %4 = getelementptr inbounds %Bullet, ptr %result, i32 0, i32 0
+  %readtmp = load %Bullet, ptr %a, align 8
+  %extracted = extractvalue %Bullet %readtmp, 0
+  %readtmp1 = load %Bullet, ptr %b, align 8
+  %extracted2 = extractvalue %Bullet %readtmp1, 0
+  %readtmp3 = load float, ptr %pc, align 4
+  %calltmp = call void @Sprite.lerp_0(ptr %4, %Sprite %extracted, %Sprite %extracted2, float %readtmp3)
+  %readtmp4 = load %Bullet, ptr %result, align 8
+  store %Bullet %readtmp4, ptr %0, align 8
+  ret void
+}
+
+define void @Sprite.lerp_0(ptr %0, %Sprite %1, %Sprite %2, float %3) {
+entry:
+  %result = alloca %Sprite, align 8
+  %a = alloca %Sprite, align 8
+  %b = alloca %Sprite, align 8
+  %pc = alloca float, align 4
+  store float %3, ptr %pc, align 4
+  store %Sprite %2, ptr %a, align 8
+  store %Sprite %1, ptr %b, align 8
+  store %Sprite %1, ptr %result, align 8
+  %4 = getelementptr inbounds %Sprite, ptr %result, i32 0, i32 1
+  %5 = getelementptr inbounds %Sprite, ptr %a, i32 0, i32 1
+  %readtmp = load %Vec2, ptr %5, align 4
+  %6 = getelementptr inbounds %Sprite, ptr %b, i32 0, i32 1
+  %readtmp1 = load %Vec2, ptr %6, align 4
+  %readtmp2 = load float, ptr %pc, align 4
+  %calltmp = call %Vec2 @Vec2.lerp_0(%Vec2 %readtmp, %Vec2 %readtmp1, float %readtmp2)
+  store %Vec2 %calltmp, ptr %4, align 4
+  %7 = getelementptr inbounds %Sprite, ptr %result, i32 0, i32 0
+  %8 = getelementptr inbounds %Sprite, ptr %a, i32 0, i32 0
+  %readtmp3 = load %Vec2, ptr %8, align 4
+  %9 = getelementptr inbounds %Sprite, ptr %b, i32 0, i32 0
+  %readtmp4 = load %Vec2, ptr %9, align 4
+  %readtmp5 = load float, ptr %pc, align 4
+  %calltmp6 = call %Vec2 @Vec2.lerp_0(%Vec2 %readtmp3, %Vec2 %readtmp4, float %readtmp5)
+  store %Vec2 %calltmp6, ptr %7, align 4
+  %readtmp7 = load %Sprite, ptr %result, align 8
+  store %Sprite %readtmp7, ptr %0, align 8
+  ret void
+}
+
+define void @Stars.lerp_0(ptr %0, ptr %1, ptr %2, float %3) {
+entry:
+  %result = alloca %Stars, align 8
+  %a = alloca %Stars, align 8
+  %b = alloca %Stars, align 8
+  %pc = alloca float, align 4
+  store float %3, ptr %pc, align 4
+  %readtmp = load %Stars, ptr %2, align 8
+  store %Stars %readtmp, ptr %a, align 8
+  %readtmp1 = load %Stars, ptr %1, align 8
+  store %Stars %readtmp1, ptr %b, align 8
+  %readtmp2 = load %Stars, ptr %1, align 8
+  store %Stars %readtmp2, ptr %result, align 8
+  %idx = alloca i32, align 4
+  store i32 0, ptr %idx, align 4
+  br label %dobody
+
+dobody:                                           ; preds = %ifmerge, %entry
+  %currenta = alloca ptr, align 8
+  %4 = getelementptr inbounds %Stars, ptr %a, i32 0, i32 1
+  %readtmp3 = load i32, ptr %idx, align 4
+  %multmp = mul i32 %readtmp3, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp = call ptr @mem.add_0(ptr %4, i32 %multmp)
+  store ptr %calltmp, ptr %currenta, align 8
+  %currentb = alloca ptr, align 8
+  %5 = getelementptr inbounds %Stars, ptr %b, i32 0, i32 1
+  %readtmp4 = load i32, ptr %idx, align 4
+  %multmp5 = mul i32 %readtmp4, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp6 = call ptr @mem.add_0(ptr %5, i32 %multmp5)
+  store ptr %calltmp6, ptr %currentb, align 8
+  %curres = alloca ptr, align 8
+  %6 = getelementptr inbounds %Stars, ptr %result, i32 0, i32 1
+  %readtmp7 = load i32, ptr %idx, align 4
+  %multmp8 = mul i32 %readtmp7, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp9 = call ptr @mem.add_0(ptr %6, i32 %multmp8)
+  store ptr %calltmp9, ptr %curres, align 8
+  %readtmp10 = load ptr, ptr %currenta, align 8
+  %7 = getelementptr inbounds %Star, ptr %readtmp10, i32 0, i32 1
+  %readtmp11 = load i1, ptr %7, align 1
+  %readtmp12 = load ptr, ptr %currentb, align 8
+  %8 = getelementptr inbounds %Star, ptr %readtmp12, i32 0, i32 1
+  %readtmp13 = load i1, ptr %8, align 1
+  %neqtmp = icmp eq i1 %readtmp13, %readtmp11
+  %ifcond = icmp ne i1 %neqtmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+domerge:                                          ; preds = %ifmerge
+  %readtmp23 = load %Stars, ptr %result, align 8
+  store %Stars %readtmp23, ptr %0, align 8
+  ret void
+
+ifbody:                                           ; preds = %dobody
+  %readtmp14 = load ptr, ptr %curres, align 8
+  %9 = getelementptr inbounds %Star, ptr %readtmp14, i32 0, i32 2
+  %readtmp15 = load ptr, ptr %currenta, align 8
+  %10 = getelementptr inbounds %Star, ptr %readtmp15, i32 0, i32 2
+  %readtmp16 = load %Vec2, ptr %10, align 4
+  %readtmp17 = load ptr, ptr %currentb, align 8
+  %11 = getelementptr inbounds %Star, ptr %readtmp17, i32 0, i32 2
+  %readtmp18 = load %Vec2, ptr %11, align 4
+  %readtmp19 = load float, ptr %pc, align 4
+  %calltmp20 = call %Vec2 @Vec2.lerp_0(%Vec2 %readtmp16, %Vec2 %readtmp18, float %readtmp19)
+  store %Vec2 %calltmp20, ptr %9, align 4
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %dobody
+  %readtmp21 = load i32, ptr %idx, align 4
+  %addtmp = add i32 %readtmp21, 1
+  store i32 %addtmp, ptr %idx, align 4
+  %readtmp22 = load i32, ptr %idx, align 4
+  %lttmp = icmp ult i32 %readtmp22, 100
+  %docond = icmp ne i1 %lttmp, false
+  br i1 %docond, label %dobody, label %domerge
+}
+
+define void @GameState.draw_0(ptr %0, ptr %1) {
+entry:
+  %sb = alloca ptr, align 8
+  %state = alloca ptr, align 8
+  store ptr %1, ptr %sb, align 8
+  store ptr %0, ptr %state, align 8
+  %readtmp = load ptr, ptr %state, align 8
+  %2 = getelementptr inbounds %GameState, ptr %readtmp, i32 0, i32 0
+  %3 = getelementptr inbounds %MultiSprite, ptr %2, i32 0, i32 3
+  %4 = getelementptr inbounds %Vec2, ptr %3, i32 0, i32 0
+  store float 1.000000e+00, ptr %4, align 4
+  %readtmp1 = load ptr, ptr %state, align 8
+  %5 = getelementptr inbounds %GameState, ptr %readtmp1, i32 0, i32 0
+  %6 = getelementptr inbounds %MultiSprite, ptr %5, i32 0, i32 3
+  %7 = getelementptr inbounds %Vec2, ptr %6, i32 0, i32 1
+  store float 1.000000e+00, ptr %7, align 4
+  %calltmp = call ptr @Input.instance_0()
+  %8 = getelementptr inbounds %Input, ptr %calltmp, i32 0, i32 0
+  %9 = getelementptr inbounds %Vec2, ptr %8, i32 0, i32 0
+  %readtmp2 = load float, ptr %9, align 4
+  %lttmp = fcmp ule float %readtmp2, 0xBFB99999A0000000
+  %ifcond = icmp ne i1 %lttmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  %readtmp3 = load ptr, ptr %state, align 8
+  %10 = getelementptr inbounds %GameState, ptr %readtmp3, i32 0, i32 0
+  %11 = getelementptr inbounds %MultiSprite, ptr %10, i32 0, i32 3
+  %12 = getelementptr inbounds %Vec2, ptr %11, i32 0, i32 0
+  store float 0.000000e+00, ptr %12, align 4
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %entry
+  %calltmp4 = call ptr @Input.instance_0()
+  %13 = getelementptr inbounds %Input, ptr %calltmp4, i32 0, i32 0
+  %14 = getelementptr inbounds %Vec2, ptr %13, i32 0, i32 0
+  %readtmp5 = load float, ptr %14, align 4
+  %gttmp = fcmp uge float %readtmp5, 0x3FB99999A0000000
+  %ifcond6 = icmp ne i1 %gttmp, false
+  br i1 %ifcond6, label %ifbody7, label %ifmerge8
+
+ifbody7:                                          ; preds = %ifmerge
+  %readtmp9 = load ptr, ptr %state, align 8
+  %15 = getelementptr inbounds %GameState, ptr %readtmp9, i32 0, i32 0
+  %16 = getelementptr inbounds %MultiSprite, ptr %15, i32 0, i32 3
+  %17 = getelementptr inbounds %Vec2, ptr %16, i32 0, i32 0
+  store float 2.000000e+00, ptr %17, align 4
+  br label %ifmerge8
+
+ifmerge8:                                         ; preds = %ifbody7, %ifmerge
+  %calltmp10 = call ptr @Input.instance_0()
+  %18 = getelementptr inbounds %Input, ptr %calltmp10, i32 0, i32 0
+  %19 = getelementptr inbounds %Vec2, ptr %18, i32 0, i32 1
+  %readtmp11 = load float, ptr %19, align 4
+  %lttmp12 = fcmp ule float %readtmp11, 0xBFB99999A0000000
+  %ifcond13 = icmp ne i1 %lttmp12, false
+  br i1 %ifcond13, label %ifbody14, label %ifmerge15
+
+ifbody14:                                         ; preds = %ifmerge8
+  %readtmp16 = load ptr, ptr %state, align 8
+  %20 = getelementptr inbounds %GameState, ptr %readtmp16, i32 0, i32 0
+  %21 = getelementptr inbounds %MultiSprite, ptr %20, i32 0, i32 3
+  %22 = getelementptr inbounds %Vec2, ptr %21, i32 0, i32 1
+  store float 2.000000e+00, ptr %22, align 4
+  br label %ifmerge15
+
+ifmerge15:                                        ; preds = %ifbody14, %ifmerge8
+  %calltmp17 = call ptr @Input.instance_0()
+  %23 = getelementptr inbounds %Input, ptr %calltmp17, i32 0, i32 0
+  %24 = getelementptr inbounds %Vec2, ptr %23, i32 0, i32 1
+  %readtmp18 = load float, ptr %24, align 4
+  %gttmp19 = fcmp uge float %readtmp18, 0x3FB99999A0000000
+  %ifcond20 = icmp ne i1 %gttmp19, false
+  br i1 %ifcond20, label %ifbody21, label %ifmerge22
+
+ifbody21:                                         ; preds = %ifmerge15
+  %readtmp23 = load ptr, ptr %state, align 8
+  %25 = getelementptr inbounds %GameState, ptr %readtmp23, i32 0, i32 0
+  %26 = getelementptr inbounds %MultiSprite, ptr %25, i32 0, i32 3
+  %27 = getelementptr inbounds %Vec2, ptr %26, i32 0, i32 1
+  store float 0.000000e+00, ptr %27, align 4
+  br label %ifmerge22
+
+ifmerge22:                                        ; preds = %ifbody21, %ifmerge15
+  %readtmp24 = load ptr, ptr %state, align 8
+  %28 = getelementptr inbounds %GameState, ptr %readtmp24, i32 0, i32 3
+  %readtmp25 = load ptr, ptr %sb, align 8
+  %calltmp26 = call void @BulletManager.draw_0(ptr %28, ptr %readtmp25)
+  %readtmp27 = load ptr, ptr %sb, align 8
+  %readtmp28 = load ptr, ptr %state, align 8
+  %29 = getelementptr inbounds %GameState, ptr %readtmp28, i32 0, i32 0
+  %readtmp29 = load %MultiSprite, ptr %29, align 8
+  %calltmp30 = call void @SpriteBatch.draw_1(ptr %readtmp27, %MultiSprite %readtmp29)
+  %readtmp31 = load ptr, ptr %sb, align 8
+  %readtmp32 = load ptr, ptr %state, align 8
+  %30 = getelementptr inbounds %GameState, ptr %readtmp32, i32 0, i32 4
+  %readtmp33 = load %Stars, ptr %30, align 8
+  %calltmp34 = call void @SpriteBatch.draw_2(ptr %readtmp31, %Stars %readtmp33)
+  ret void
+}
+
+define void @BulletManager.draw_0(ptr %0, ptr %1) {
+entry:
+  %self = alloca ptr, align 8
+  %sb = alloca ptr, align 8
+  store ptr %1, ptr %sb, align 8
+  store ptr %0, ptr %self, align 8
+  %idx = alloca i32, align 4
+  store i32 0, ptr %idx, align 4
+  %readtmp = load i32, ptr %idx, align 4
+  %readtmp1 = load ptr, ptr %self, align 8
+  %2 = getelementptr inbounds %BulletManager, ptr %readtmp1, i32 0, i32 1
+  %readtmp2 = load i32, ptr %2, align 4
+  %lttmp = icmp ult i32 %readtmp, %readtmp2
+  %ifcond = icmp ne i1 %lttmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  br label %dobody
+
+ifmerge:                                          ; preds = %domerge, %entry
+  ret void
+
+dobody:                                           ; preds = %dobody, %ifbody
+  %readtmp3 = load ptr, ptr %self, align 8
+  %3 = getelementptr inbounds %BulletManager, ptr %readtmp3, i32 0, i32 0
+  %readtmp4 = load ptr, ptr %3, align 8
+  %readtmp5 = load i32, ptr %idx, align 4
+  %multmp = mul i32 %readtmp5, ptrtoint (ptr getelementptr inbounds ([1 x %Bullet], ptr null, i32 1) to i32)
+  %calltmp = call ptr @mem.add_1(ptr %readtmp4, i32 %multmp)
+  %readtmp6 = load %Bullet, ptr %calltmp, align 8
+  %readtmp7 = load ptr, ptr %sb, align 8
+  %readtmp8 = load ptr, ptr %self, align 8
+  %4 = getelementptr inbounds %BulletManager, ptr %readtmp8, i32 0, i32 2
+  %readtmp9 = load ptr, ptr %4, align 8
+  %readtmp10 = load ptr, ptr %self, align 8
+  %5 = getelementptr inbounds %BulletManager, ptr %readtmp10, i32 0, i32 3
+  %readtmp11 = load ptr, ptr %5, align 8
+  %calltmp12 = call void @Bullet.draw_0(%Bullet %readtmp6, ptr %readtmp7, ptr %readtmp9, ptr %readtmp11)
+  %readtmp13 = load i32, ptr %idx, align 4
+  %addtmp = add i32 %readtmp13, 1
+  store i32 %addtmp, ptr %idx, align 4
+  %readtmp14 = load i32, ptr %idx, align 4
+  %readtmp15 = load ptr, ptr %self, align 8
+  %6 = getelementptr inbounds %BulletManager, ptr %readtmp15, i32 0, i32 1
+  %readtmp16 = load i32, ptr %6, align 4
+  %lttmp17 = icmp ult i32 %readtmp14, %readtmp16
+  %docond = icmp ne i1 %lttmp17, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  br label %ifmerge
+}
+
+define void @Bullet.draw_0(%Bullet %0, ptr %1, ptr %2, ptr %3) {
+entry:
+  %self = alloca %Bullet, align 8
+  %sb = alloca ptr, align 8
+  %tex = alloca ptr, align 8
+  %shd = alloca ptr, align 8
+  store ptr %3, ptr %shd, align 8
+  store ptr %2, ptr %tex, align 8
+  store ptr %1, ptr %sb, align 8
+  store %Bullet %0, ptr %self, align 8
+  %4 = getelementptr inbounds %Bullet, ptr %self, i32 0, i32 0
+  %5 = getelementptr inbounds %Sprite, ptr %4, i32 0, i32 2
+  %readtmp = load ptr, ptr %shd, align 8
+  store ptr %readtmp, ptr %5, align 8
+  %6 = getelementptr inbounds %Bullet, ptr %self, i32 0, i32 0
+  %7 = getelementptr inbounds %Sprite, ptr %6, i32 0, i32 3
+  %readtmp1 = load ptr, ptr %tex, align 8
+  store ptr %readtmp1, ptr %7, align 8
+  %readtmp2 = load ptr, ptr %sb, align 8
+  %readtmp3 = load %Bullet, ptr %self, align 8
+  %extracted = extractvalue %Bullet %readtmp3, 0
+  %calltmp = call void @SpriteBatch.draw_0(ptr %readtmp2, %Sprite %extracted)
+  ret void
+}
+
+define void @SpriteBatch.draw_0(ptr %0, %Sprite %1) {
+entry:
+  %entry1 = alloca %SBQueueEntry, align 8
+  %dr = alloca %Sprite, align 8
+  %sb = alloca ptr, align 8
+  store %Sprite %1, ptr %dr, align 8
+  store ptr %0, ptr %sb, align 8
+  %2 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 0
+  store i1 true, ptr %2, align 1
+  %3 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 2
+  %4 = getelementptr inbounds %Sprite, ptr %dr, i32 0, i32 3
+  %readtmp = load ptr, ptr %4, align 8
+  store ptr %readtmp, ptr %3, align 8
+  %5 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 3
+  %6 = getelementptr inbounds %Sprite, ptr %dr, i32 0, i32 2
+  %readtmp2 = load ptr, ptr %6, align 8
+  store ptr %readtmp2, ptr %5, align 8
+  %7 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 4
+  %readtmp3 = load %Sprite, ptr %dr, align 8
+  %calltmp = call ptr @Sprite.getVerts_0(ptr %dr)
+  store ptr %calltmp, ptr %7, align 8
+  %old = alloca i32, align 4
+  %readtmp4 = load ptr, ptr %sb, align 8
+  %8 = getelementptr inbounds %SpriteBatch, ptr %readtmp4, i32 0, i32 1
+  %readtmp5 = load ptr, ptr %8, align 8
+  %9 = getelementptr inbounds %SBQueue, ptr %readtmp5, i32 0, i32 1
+  %readtmp6 = load i32, ptr %9, align 4
+  store i32 %readtmp6, ptr %old, align 4
+  %readtmp7 = load ptr, ptr %sb, align 8
+  %10 = getelementptr inbounds %SpriteBatch, ptr %readtmp7, i32 0, i32 1
+  %readtmp8 = load ptr, ptr %10, align 8
+  %11 = getelementptr inbounds %SBQueue, ptr %readtmp8, i32 0, i32 1
+  %readtmp9 = load ptr, ptr %sb, align 8
+  %12 = getelementptr inbounds %SpriteBatch, ptr %readtmp9, i32 0, i32 1
+  %readtmp10 = load ptr, ptr %12, align 8
+  %13 = getelementptr inbounds %SBQueue, ptr %readtmp10, i32 0, i32 1
+  %readtmp11 = load i32, ptr %13, align 4
+  %addtmp = add i32 %readtmp11, 1
+  store i32 %addtmp, ptr %11, align 4
+  %readtmp12 = load ptr, ptr %sb, align 8
+  %14 = getelementptr inbounds %SpriteBatch, ptr %readtmp12, i32 0, i32 1
+  %readtmp13 = load ptr, ptr %14, align 8
+  %15 = getelementptr inbounds %SBQueue, ptr %readtmp13, i32 0, i32 0
+  %readtmp14 = load ptr, ptr %sb, align 8
+  %16 = getelementptr inbounds %SpriteBatch, ptr %readtmp14, i32 0, i32 1
+  %readtmp15 = load ptr, ptr %16, align 8
+  %17 = getelementptr inbounds %SBQueue, ptr %readtmp15, i32 0, i32 0
+  %readtmp16 = load ptr, ptr %17, align 8
+  %readtmp17 = load ptr, ptr %sb, align 8
+  %18 = getelementptr inbounds %SpriteBatch, ptr %readtmp17, i32 0, i32 1
+  %readtmp18 = load ptr, ptr %18, align 8
+  %calltmp19 = call i32 @SBQueue.getSize_0(ptr %readtmp18)
+  %calltmp20 = call ptr @realloc(ptr %readtmp16, i32 %calltmp19)
+  store ptr %calltmp20, ptr %15, align 8
+  %readtmp21 = load ptr, ptr %sb, align 8
+  %19 = getelementptr inbounds %SpriteBatch, ptr %readtmp21, i32 0, i32 1
+  %readtmp22 = load ptr, ptr %19, align 8
+  %readtmp23 = load i32, ptr %old, align 4
+  %calltmp24 = call ptr @SBQueue.getEntry_0(ptr %readtmp22, i32 %readtmp23)
+  %readtmp25 = load %SBQueueEntry, ptr %entry1, align 8
+  store %SBQueueEntry %readtmp25, ptr %calltmp24, align 8
+  ret void
+}
+
+define ptr @Sprite.getVerts_0(ptr %0) {
+entry:
+  %self = alloca ptr, align 8
+  store ptr %0, ptr %self, align 8
+  %v = alloca ptr, align 8
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Verts], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr %v, align 8
+  %readtmp = load ptr, ptr %v, align 8
+  %1 = getelementptr inbounds %Verts, ptr %readtmp, i32 0, i32 0
+  %calltmp1 = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32), i32 6)
+  store ptr %calltmp1, ptr %1, align 8
+  %readtmp2 = load ptr, ptr %v, align 8
+  %2 = getelementptr inbounds %Verts, ptr %readtmp2, i32 0, i32 1
+  store i32 6, ptr %2, align 4
+  %readtmp3 = load ptr, ptr %v, align 8
+  %3 = getelementptr inbounds %Verts, ptr %readtmp3, i32 0, i32 0
+  %readtmp4 = load ptr, ptr %3, align 8
+  %elemtemp = getelementptr inbounds [3 x %Vert], ptr %readtmp4, i32 0, i32 0
+  %4 = getelementptr inbounds %Vert, ptr %elemtemp, i32 0, i32 0
+  %readtmp5 = load ptr, ptr %self, align 8
+  %5 = getelementptr inbounds %Sprite, ptr %readtmp5, i32 0, i32 1
+  %6 = getelementptr inbounds %Vec2, ptr %5, i32 0, i32 0
+  %readtmp6 = load float, ptr %6, align 4
+  store float %readtmp6, ptr %4, align 4
+  %readtmp7 = load ptr, ptr %v, align 8
+  %7 = getelementptr inbounds %Verts, ptr %readtmp7, i32 0, i32 0
+  %readtmp8 = load ptr, ptr %7, align 8
+  %elemtemp9 = getelementptr inbounds [3 x %Vert], ptr %readtmp8, i32 0, i32 0
+  %8 = getelementptr inbounds %Vert, ptr %elemtemp9, i32 0, i32 1
+  %readtmp10 = load ptr, ptr %self, align 8
+  %9 = getelementptr inbounds %Sprite, ptr %readtmp10, i32 0, i32 1
+  %10 = getelementptr inbounds %Vec2, ptr %9, i32 0, i32 1
+  %readtmp11 = load float, ptr %10, align 4
+  store float %readtmp11, ptr %8, align 4
+  %readtmp12 = load ptr, ptr %v, align 8
+  %11 = getelementptr inbounds %Verts, ptr %readtmp12, i32 0, i32 0
+  %readtmp13 = load ptr, ptr %11, align 8
+  %elemtemp14 = getelementptr inbounds [3 x %Vert], ptr %readtmp13, i32 0, i32 0
+  %12 = getelementptr inbounds %Vert, ptr %elemtemp14, i32 0, i32 2
+  store float 0.000000e+00, ptr %12, align 4
+  %readtmp15 = load ptr, ptr %v, align 8
+  %13 = getelementptr inbounds %Verts, ptr %readtmp15, i32 0, i32 0
+  %readtmp16 = load ptr, ptr %13, align 8
+  %elemtemp17 = getelementptr inbounds [3 x %Vert], ptr %readtmp16, i32 0, i32 0
+  %14 = getelementptr inbounds %Vert, ptr %elemtemp17, i32 0, i32 3
+  store float 0.000000e+00, ptr %14, align 4
+  %readtmp18 = load ptr, ptr %v, align 8
+  %15 = getelementptr inbounds %Verts, ptr %readtmp18, i32 0, i32 0
+  %readtmp19 = load ptr, ptr %15, align 8
+  %elemtemp20 = getelementptr inbounds [3 x %Vert], ptr %readtmp19, i32 0, i32 0
+  %16 = getelementptr inbounds %Vert, ptr %elemtemp20, i32 0, i32 4
+  store float 0.000000e+00, ptr %16, align 4
+  %readtmp21 = load ptr, ptr %v, align 8
+  %17 = getelementptr inbounds %Verts, ptr %readtmp21, i32 0, i32 0
+  %readtmp22 = load ptr, ptr %17, align 8
+  %elemtemp23 = getelementptr inbounds [3 x %Vert], ptr %readtmp22, i32 0, i32 1
+  %18 = getelementptr inbounds %Vert, ptr %elemtemp23, i32 0, i32 0
+  %readtmp24 = load ptr, ptr %self, align 8
+  %19 = getelementptr inbounds %Sprite, ptr %readtmp24, i32 0, i32 1
+  %20 = getelementptr inbounds %Vec2, ptr %19, i32 0, i32 0
+  %readtmp25 = load float, ptr %20, align 4
+  %readtmp26 = load ptr, ptr %self, align 8
+  %21 = getelementptr inbounds %Sprite, ptr %readtmp26, i32 0, i32 0
+  %22 = getelementptr inbounds %Vec2, ptr %21, i32 0, i32 0
+  %readtmp27 = load float, ptr %22, align 4
+  %addtmp = fadd float %readtmp25, %readtmp27
+  store float %addtmp, ptr %18, align 4
+  %readtmp28 = load ptr, ptr %v, align 8
+  %23 = getelementptr inbounds %Verts, ptr %readtmp28, i32 0, i32 0
+  %readtmp29 = load ptr, ptr %23, align 8
+  %elemtemp30 = getelementptr inbounds [3 x %Vert], ptr %readtmp29, i32 0, i32 1
+  %24 = getelementptr inbounds %Vert, ptr %elemtemp30, i32 0, i32 1
+  %readtmp31 = load ptr, ptr %self, align 8
+  %25 = getelementptr inbounds %Sprite, ptr %readtmp31, i32 0, i32 1
+  %26 = getelementptr inbounds %Vec2, ptr %25, i32 0, i32 1
+  %readtmp32 = load float, ptr %26, align 4
+  %readtmp33 = load ptr, ptr %self, align 8
+  %27 = getelementptr inbounds %Sprite, ptr %readtmp33, i32 0, i32 0
+  %28 = getelementptr inbounds %Vec2, ptr %27, i32 0, i32 1
+  %readtmp34 = load float, ptr %28, align 4
+  %addtmp35 = fadd float %readtmp32, %readtmp34
+  store float %addtmp35, ptr %24, align 4
+  %readtmp36 = load ptr, ptr %v, align 8
+  %29 = getelementptr inbounds %Verts, ptr %readtmp36, i32 0, i32 0
+  %readtmp37 = load ptr, ptr %29, align 8
+  %elemtemp38 = getelementptr inbounds [3 x %Vert], ptr %readtmp37, i32 0, i32 1
+  %30 = getelementptr inbounds %Vert, ptr %elemtemp38, i32 0, i32 2
+  store float 0.000000e+00, ptr %30, align 4
+  %readtmp39 = load ptr, ptr %v, align 8
+  %31 = getelementptr inbounds %Verts, ptr %readtmp39, i32 0, i32 0
+  %readtmp40 = load ptr, ptr %31, align 8
+  %elemtemp41 = getelementptr inbounds [3 x %Vert], ptr %readtmp40, i32 0, i32 1
+  %32 = getelementptr inbounds %Vert, ptr %elemtemp41, i32 0, i32 3
+  store float 1.000000e+00, ptr %32, align 4
+  %readtmp42 = load ptr, ptr %v, align 8
+  %33 = getelementptr inbounds %Verts, ptr %readtmp42, i32 0, i32 0
+  %readtmp43 = load ptr, ptr %33, align 8
+  %elemtemp44 = getelementptr inbounds [3 x %Vert], ptr %readtmp43, i32 0, i32 1
+  %34 = getelementptr inbounds %Vert, ptr %elemtemp44, i32 0, i32 4
+  store float 1.000000e+00, ptr %34, align 4
+  %readtmp45 = load ptr, ptr %v, align 8
+  %35 = getelementptr inbounds %Verts, ptr %readtmp45, i32 0, i32 0
+  %readtmp46 = load ptr, ptr %35, align 8
+  %elemtemp47 = getelementptr inbounds [3 x %Vert], ptr %readtmp46, i32 0, i32 2
+  %36 = getelementptr inbounds %Vert, ptr %elemtemp47, i32 0, i32 0
+  %readtmp48 = load ptr, ptr %self, align 8
+  %37 = getelementptr inbounds %Sprite, ptr %readtmp48, i32 0, i32 1
+  %38 = getelementptr inbounds %Vec2, ptr %37, i32 0, i32 0
+  %readtmp49 = load float, ptr %38, align 4
+  store float %readtmp49, ptr %36, align 4
+  %readtmp50 = load ptr, ptr %v, align 8
+  %39 = getelementptr inbounds %Verts, ptr %readtmp50, i32 0, i32 0
+  %readtmp51 = load ptr, ptr %39, align 8
+  %elemtemp52 = getelementptr inbounds [3 x %Vert], ptr %readtmp51, i32 0, i32 2
+  %40 = getelementptr inbounds %Vert, ptr %elemtemp52, i32 0, i32 1
+  %readtmp53 = load ptr, ptr %self, align 8
+  %41 = getelementptr inbounds %Sprite, ptr %readtmp53, i32 0, i32 1
+  %42 = getelementptr inbounds %Vec2, ptr %41, i32 0, i32 1
+  %readtmp54 = load float, ptr %42, align 4
+  %readtmp55 = load ptr, ptr %self, align 8
+  %43 = getelementptr inbounds %Sprite, ptr %readtmp55, i32 0, i32 0
+  %44 = getelementptr inbounds %Vec2, ptr %43, i32 0, i32 1
+  %readtmp56 = load float, ptr %44, align 4
+  %addtmp57 = fadd float %readtmp54, %readtmp56
+  store float %addtmp57, ptr %40, align 4
+  %readtmp58 = load ptr, ptr %v, align 8
+  %45 = getelementptr inbounds %Verts, ptr %readtmp58, i32 0, i32 0
+  %readtmp59 = load ptr, ptr %45, align 8
+  %elemtemp60 = getelementptr inbounds [3 x %Vert], ptr %readtmp59, i32 0, i32 2
+  %46 = getelementptr inbounds %Vert, ptr %elemtemp60, i32 0, i32 2
+  store float 0.000000e+00, ptr %46, align 4
+  %readtmp61 = load ptr, ptr %v, align 8
+  %47 = getelementptr inbounds %Verts, ptr %readtmp61, i32 0, i32 0
+  %readtmp62 = load ptr, ptr %47, align 8
+  %elemtemp63 = getelementptr inbounds [3 x %Vert], ptr %readtmp62, i32 0, i32 2
+  %48 = getelementptr inbounds %Vert, ptr %elemtemp63, i32 0, i32 3
+  store float 0.000000e+00, ptr %48, align 4
+  %readtmp64 = load ptr, ptr %v, align 8
+  %49 = getelementptr inbounds %Verts, ptr %readtmp64, i32 0, i32 0
+  %readtmp65 = load ptr, ptr %49, align 8
+  %elemtemp66 = getelementptr inbounds [3 x %Vert], ptr %readtmp65, i32 0, i32 2
+  %50 = getelementptr inbounds %Vert, ptr %elemtemp66, i32 0, i32 4
+  store float 1.000000e+00, ptr %50, align 4
+  %readtmp67 = load ptr, ptr %v, align 8
+  %51 = getelementptr inbounds %Verts, ptr %readtmp67, i32 0, i32 0
+  %readtmp68 = load ptr, ptr %51, align 8
+  %elemtemp69 = getelementptr inbounds [3 x %Vert], ptr %readtmp68, i32 0, i32 3
+  %52 = getelementptr inbounds %Vert, ptr %elemtemp69, i32 0, i32 0
+  %readtmp70 = load ptr, ptr %self, align 8
+  %53 = getelementptr inbounds %Sprite, ptr %readtmp70, i32 0, i32 1
+  %54 = getelementptr inbounds %Vec2, ptr %53, i32 0, i32 0
+  %readtmp71 = load float, ptr %54, align 4
+  store float %readtmp71, ptr %52, align 4
+  %readtmp72 = load ptr, ptr %v, align 8
+  %55 = getelementptr inbounds %Verts, ptr %readtmp72, i32 0, i32 0
+  %readtmp73 = load ptr, ptr %55, align 8
+  %elemtemp74 = getelementptr inbounds [3 x %Vert], ptr %readtmp73, i32 0, i32 3
+  %56 = getelementptr inbounds %Vert, ptr %elemtemp74, i32 0, i32 1
+  %readtmp75 = load ptr, ptr %self, align 8
+  %57 = getelementptr inbounds %Sprite, ptr %readtmp75, i32 0, i32 1
+  %58 = getelementptr inbounds %Vec2, ptr %57, i32 0, i32 1
+  %readtmp76 = load float, ptr %58, align 4
+  store float %readtmp76, ptr %56, align 4
+  %readtmp77 = load ptr, ptr %v, align 8
+  %59 = getelementptr inbounds %Verts, ptr %readtmp77, i32 0, i32 0
+  %readtmp78 = load ptr, ptr %59, align 8
+  %elemtemp79 = getelementptr inbounds [3 x %Vert], ptr %readtmp78, i32 0, i32 3
+  %60 = getelementptr inbounds %Vert, ptr %elemtemp79, i32 0, i32 2
+  store float 0.000000e+00, ptr %60, align 4
+  %readtmp80 = load ptr, ptr %v, align 8
+  %61 = getelementptr inbounds %Verts, ptr %readtmp80, i32 0, i32 0
+  %readtmp81 = load ptr, ptr %61, align 8
+  %elemtemp82 = getelementptr inbounds [3 x %Vert], ptr %readtmp81, i32 0, i32 3
+  %62 = getelementptr inbounds %Vert, ptr %elemtemp82, i32 0, i32 3
+  store float 0.000000e+00, ptr %62, align 4
+  %readtmp83 = load ptr, ptr %v, align 8
+  %63 = getelementptr inbounds %Verts, ptr %readtmp83, i32 0, i32 0
+  %readtmp84 = load ptr, ptr %63, align 8
+  %elemtemp85 = getelementptr inbounds [3 x %Vert], ptr %readtmp84, i32 0, i32 3
+  %64 = getelementptr inbounds %Vert, ptr %elemtemp85, i32 0, i32 4
+  store float 0.000000e+00, ptr %64, align 4
+  %readtmp86 = load ptr, ptr %v, align 8
+  %65 = getelementptr inbounds %Verts, ptr %readtmp86, i32 0, i32 0
+  %readtmp87 = load ptr, ptr %65, align 8
+  %elemtemp88 = getelementptr inbounds [3 x %Vert], ptr %readtmp87, i32 0, i32 4
+  %66 = getelementptr inbounds %Vert, ptr %elemtemp88, i32 0, i32 0
+  %readtmp89 = load ptr, ptr %self, align 8
+  %67 = getelementptr inbounds %Sprite, ptr %readtmp89, i32 0, i32 1
+  %68 = getelementptr inbounds %Vec2, ptr %67, i32 0, i32 0
+  %readtmp90 = load float, ptr %68, align 4
+  %readtmp91 = load ptr, ptr %self, align 8
+  %69 = getelementptr inbounds %Sprite, ptr %readtmp91, i32 0, i32 0
+  %70 = getelementptr inbounds %Vec2, ptr %69, i32 0, i32 0
+  %readtmp92 = load float, ptr %70, align 4
+  %addtmp93 = fadd float %readtmp90, %readtmp92
+  store float %addtmp93, ptr %66, align 4
+  %readtmp94 = load ptr, ptr %v, align 8
+  %71 = getelementptr inbounds %Verts, ptr %readtmp94, i32 0, i32 0
+  %readtmp95 = load ptr, ptr %71, align 8
+  %elemtemp96 = getelementptr inbounds [3 x %Vert], ptr %readtmp95, i32 0, i32 4
+  %72 = getelementptr inbounds %Vert, ptr %elemtemp96, i32 0, i32 1
+  %readtmp97 = load ptr, ptr %self, align 8
+  %73 = getelementptr inbounds %Sprite, ptr %readtmp97, i32 0, i32 1
+  %74 = getelementptr inbounds %Vec2, ptr %73, i32 0, i32 1
+  %readtmp98 = load float, ptr %74, align 4
+  %readtmp99 = load ptr, ptr %self, align 8
+  %75 = getelementptr inbounds %Sprite, ptr %readtmp99, i32 0, i32 0
+  %76 = getelementptr inbounds %Vec2, ptr %75, i32 0, i32 1
+  %readtmp100 = load float, ptr %76, align 4
+  %addtmp101 = fadd float %readtmp98, %readtmp100
+  store float %addtmp101, ptr %72, align 4
+  %readtmp102 = load ptr, ptr %v, align 8
+  %77 = getelementptr inbounds %Verts, ptr %readtmp102, i32 0, i32 0
+  %readtmp103 = load ptr, ptr %77, align 8
+  %elemtemp104 = getelementptr inbounds [3 x %Vert], ptr %readtmp103, i32 0, i32 4
+  %78 = getelementptr inbounds %Vert, ptr %elemtemp104, i32 0, i32 2
+  store float 0.000000e+00, ptr %78, align 4
+  %readtmp105 = load ptr, ptr %v, align 8
+  %79 = getelementptr inbounds %Verts, ptr %readtmp105, i32 0, i32 0
+  %readtmp106 = load ptr, ptr %79, align 8
+  %elemtemp107 = getelementptr inbounds [3 x %Vert], ptr %readtmp106, i32 0, i32 4
+  %80 = getelementptr inbounds %Vert, ptr %elemtemp107, i32 0, i32 3
+  store float 1.000000e+00, ptr %80, align 4
+  %readtmp108 = load ptr, ptr %v, align 8
+  %81 = getelementptr inbounds %Verts, ptr %readtmp108, i32 0, i32 0
+  %readtmp109 = load ptr, ptr %81, align 8
+  %elemtemp110 = getelementptr inbounds [3 x %Vert], ptr %readtmp109, i32 0, i32 4
+  %82 = getelementptr inbounds %Vert, ptr %elemtemp110, i32 0, i32 4
+  store float 1.000000e+00, ptr %82, align 4
+  %readtmp111 = load ptr, ptr %v, align 8
+  %83 = getelementptr inbounds %Verts, ptr %readtmp111, i32 0, i32 0
+  %readtmp112 = load ptr, ptr %83, align 8
+  %elemtemp113 = getelementptr inbounds [3 x %Vert], ptr %readtmp112, i32 0, i32 5
+  %84 = getelementptr inbounds %Vert, ptr %elemtemp113, i32 0, i32 0
+  %readtmp114 = load ptr, ptr %self, align 8
+  %85 = getelementptr inbounds %Sprite, ptr %readtmp114, i32 0, i32 1
+  %86 = getelementptr inbounds %Vec2, ptr %85, i32 0, i32 0
+  %readtmp115 = load float, ptr %86, align 4
+  %readtmp116 = load ptr, ptr %self, align 8
+  %87 = getelementptr inbounds %Sprite, ptr %readtmp116, i32 0, i32 0
+  %88 = getelementptr inbounds %Vec2, ptr %87, i32 0, i32 0
+  %readtmp117 = load float, ptr %88, align 4
+  %addtmp118 = fadd float %readtmp115, %readtmp117
+  store float %addtmp118, ptr %84, align 4
+  %readtmp119 = load ptr, ptr %v, align 8
+  %89 = getelementptr inbounds %Verts, ptr %readtmp119, i32 0, i32 0
+  %readtmp120 = load ptr, ptr %89, align 8
+  %elemtemp121 = getelementptr inbounds [3 x %Vert], ptr %readtmp120, i32 0, i32 5
+  %90 = getelementptr inbounds %Vert, ptr %elemtemp121, i32 0, i32 1
+  %readtmp122 = load ptr, ptr %self, align 8
+  %91 = getelementptr inbounds %Sprite, ptr %readtmp122, i32 0, i32 1
+  %92 = getelementptr inbounds %Vec2, ptr %91, i32 0, i32 1
+  %readtmp123 = load float, ptr %92, align 4
+  store float %readtmp123, ptr %90, align 4
+  %readtmp124 = load ptr, ptr %v, align 8
+  %93 = getelementptr inbounds %Verts, ptr %readtmp124, i32 0, i32 0
+  %readtmp125 = load ptr, ptr %93, align 8
+  %elemtemp126 = getelementptr inbounds [3 x %Vert], ptr %readtmp125, i32 0, i32 5
+  %94 = getelementptr inbounds %Vert, ptr %elemtemp126, i32 0, i32 2
+  store float 0.000000e+00, ptr %94, align 4
+  %readtmp127 = load ptr, ptr %v, align 8
+  %95 = getelementptr inbounds %Verts, ptr %readtmp127, i32 0, i32 0
+  %readtmp128 = load ptr, ptr %95, align 8
+  %elemtemp129 = getelementptr inbounds [3 x %Vert], ptr %readtmp128, i32 0, i32 5
+  %96 = getelementptr inbounds %Vert, ptr %elemtemp129, i32 0, i32 3
+  store float 1.000000e+00, ptr %96, align 4
+  %readtmp130 = load ptr, ptr %v, align 8
+  %97 = getelementptr inbounds %Verts, ptr %readtmp130, i32 0, i32 0
+  %readtmp131 = load ptr, ptr %97, align 8
+  %elemtemp132 = getelementptr inbounds [3 x %Vert], ptr %readtmp131, i32 0, i32 5
+  %98 = getelementptr inbounds %Vert, ptr %elemtemp132, i32 0, i32 4
+  store float 0.000000e+00, ptr %98, align 4
+  %readtmp133 = load ptr, ptr %v, align 8
+  ret ptr %readtmp133
+}
+
+define i32 @SBQueue.getSize_0(ptr %0) {
+entry:
+  %readtmp = load %SBQueue, ptr %0, align 8
+  %extracted = extractvalue %SBQueue %readtmp, 1
+  %multmp = mul i32 %extracted, ptrtoint (ptr getelementptr inbounds ([1 x %SBQueueEntry], ptr null, i32 1) to i32)
+  ret i32 %multmp
+}
+
+define ptr @SBQueue.getEntry_0(ptr %0, i32 %1) {
+entry:
+  %q = alloca ptr, align 8
+  store ptr %0, ptr %q, align 8
+  %multmp = mul i32 %1, ptrtoint (ptr getelementptr inbounds ([1 x %SBQueueEntry], ptr null, i32 1) to i32)
+  %readtmp = load ptr, ptr %q, align 8
+  %2 = getelementptr inbounds %SBQueue, ptr %readtmp, i32 0, i32 0
+  %readtmp1 = load ptr, ptr %2, align 8
+  %calltmp = call ptr @mem.add_2(ptr %readtmp1, i32 %multmp)
+  ret ptr %calltmp
+}
+
+define ptr @mem.add_2(ptr %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, ptr %0
+  ret i32 %addtmp
+}
+
+define void @SpriteBatch.draw_1(ptr %0, %MultiSprite %1) {
+entry:
+  %entry1 = alloca %SBQueueEntry, align 8
+  %dr = alloca %MultiSprite, align 8
+  %sb = alloca ptr, align 8
+  store %MultiSprite %1, ptr %dr, align 8
+  store ptr %0, ptr %sb, align 8
+  %2 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 0
+  store i1 true, ptr %2, align 1
+  %3 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 2
+  %4 = getelementptr inbounds %MultiSprite, ptr %dr, i32 0, i32 4
+  %readtmp = load ptr, ptr %4, align 8
+  store ptr %readtmp, ptr %3, align 8
+  %5 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 3
+  %6 = getelementptr inbounds %MultiSprite, ptr %dr, i32 0, i32 5
+  %readtmp2 = load ptr, ptr %6, align 8
+  store ptr %readtmp2, ptr %5, align 8
+  %7 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 4
+  %readtmp3 = load %MultiSprite, ptr %dr, align 8
+  %calltmp = call ptr @MultiSprite.getVerts_0(ptr %dr)
+  store ptr %calltmp, ptr %7, align 8
+  %old = alloca i32, align 4
+  %readtmp4 = load ptr, ptr %sb, align 8
+  %8 = getelementptr inbounds %SpriteBatch, ptr %readtmp4, i32 0, i32 1
+  %readtmp5 = load ptr, ptr %8, align 8
+  %9 = getelementptr inbounds %SBQueue, ptr %readtmp5, i32 0, i32 1
+  %readtmp6 = load i32, ptr %9, align 4
+  store i32 %readtmp6, ptr %old, align 4
+  %readtmp7 = load ptr, ptr %sb, align 8
+  %10 = getelementptr inbounds %SpriteBatch, ptr %readtmp7, i32 0, i32 1
+  %readtmp8 = load ptr, ptr %10, align 8
+  %11 = getelementptr inbounds %SBQueue, ptr %readtmp8, i32 0, i32 1
+  %readtmp9 = load ptr, ptr %sb, align 8
+  %12 = getelementptr inbounds %SpriteBatch, ptr %readtmp9, i32 0, i32 1
+  %readtmp10 = load ptr, ptr %12, align 8
+  %13 = getelementptr inbounds %SBQueue, ptr %readtmp10, i32 0, i32 1
+  %readtmp11 = load i32, ptr %13, align 4
+  %addtmp = add i32 %readtmp11, 1
+  store i32 %addtmp, ptr %11, align 4
+  %readtmp12 = load ptr, ptr %sb, align 8
+  %14 = getelementptr inbounds %SpriteBatch, ptr %readtmp12, i32 0, i32 1
+  %readtmp13 = load ptr, ptr %14, align 8
+  %15 = getelementptr inbounds %SBQueue, ptr %readtmp13, i32 0, i32 0
+  %readtmp14 = load ptr, ptr %sb, align 8
+  %16 = getelementptr inbounds %SpriteBatch, ptr %readtmp14, i32 0, i32 1
+  %readtmp15 = load ptr, ptr %16, align 8
+  %17 = getelementptr inbounds %SBQueue, ptr %readtmp15, i32 0, i32 0
+  %readtmp16 = load ptr, ptr %17, align 8
+  %readtmp17 = load ptr, ptr %sb, align 8
+  %18 = getelementptr inbounds %SpriteBatch, ptr %readtmp17, i32 0, i32 1
+  %readtmp18 = load ptr, ptr %18, align 8
+  %calltmp19 = call i32 @SBQueue.getSize_0(ptr %readtmp18)
+  %calltmp20 = call ptr @realloc(ptr %readtmp16, i32 %calltmp19)
+  store ptr %calltmp20, ptr %15, align 8
+  %readtmp21 = load ptr, ptr %sb, align 8
+  %19 = getelementptr inbounds %SpriteBatch, ptr %readtmp21, i32 0, i32 1
+  %readtmp22 = load ptr, ptr %19, align 8
+  %readtmp23 = load i32, ptr %old, align 4
+  %calltmp24 = call ptr @SBQueue.getEntry_0(ptr %readtmp22, i32 %readtmp23)
+  %readtmp25 = load %SBQueueEntry, ptr %entry1, align 8
+  store %SBQueueEntry %readtmp25, ptr %calltmp24, align 8
+  ret void
+}
+
+define ptr @MultiSprite.getVerts_0(ptr %0) {
+entry:
+  %self = alloca ptr, align 8
+  store ptr %0, ptr %self, align 8
+  %v = alloca ptr, align 8
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Verts], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr %v, align 8
+  %readtmp = load ptr, ptr %v, align 8
+  %1 = getelementptr inbounds %Verts, ptr %readtmp, i32 0, i32 0
+  %calltmp1 = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32), i32 6)
+  store ptr %calltmp1, ptr %1, align 8
+  %readtmp2 = load ptr, ptr %v, align 8
+  %2 = getelementptr inbounds %Verts, ptr %readtmp2, i32 0, i32 1
+  store i32 6, ptr %2, align 4
+  %uv = alloca %Rect, align 8
+  %readtmp3 = load ptr, ptr %self, align 8
+  %3 = getelementptr inbounds %MultiSprite, ptr %readtmp3, i32 0, i32 2
+  %4 = getelementptr inbounds %Vec2, ptr %3, i32 0, i32 0
+  %readtmp4 = load float, ptr %4, align 4
+  %divtmp = fdiv float 1.000000e+00, %readtmp4
+  %readtmp5 = load ptr, ptr %self, align 8
+  %5 = getelementptr inbounds %MultiSprite, ptr %readtmp5, i32 0, i32 3
+  %readtmp6 = load %Vec2, ptr %5, align 4
+  %extracted = extractvalue %Vec2 %readtmp6, 0
+  %multmp = fmul float %divtmp, %extracted
+  %readtmp7 = load ptr, ptr %self, align 8
+  %6 = getelementptr inbounds %MultiSprite, ptr %readtmp7, i32 0, i32 2
+  %7 = getelementptr inbounds %Vec2, ptr %6, i32 0, i32 1
+  %readtmp8 = load float, ptr %7, align 4
+  %divtmp9 = fdiv float 1.000000e+00, %readtmp8
+  %readtmp10 = load ptr, ptr %self, align 8
+  %8 = getelementptr inbounds %MultiSprite, ptr %readtmp10, i32 0, i32 3
+  %readtmp11 = load %Vec2, ptr %8, align 4
+  %extracted12 = extractvalue %Vec2 %readtmp11, 1
+  %multmp13 = fmul float %divtmp9, %extracted12
+  %readtmp14 = load ptr, ptr %self, align 8
+  %9 = getelementptr inbounds %MultiSprite, ptr %readtmp14, i32 0, i32 2
+  %10 = getelementptr inbounds %Vec2, ptr %9, i32 0, i32 0
+  %readtmp15 = load float, ptr %10, align 4
+  %divtmp16 = fdiv float 1.000000e+00, %readtmp15
+  %readtmp17 = load ptr, ptr %self, align 8
+  %11 = getelementptr inbounds %MultiSprite, ptr %readtmp17, i32 0, i32 2
+  %12 = getelementptr inbounds %Vec2, ptr %11, i32 0, i32 1
+  %readtmp18 = load float, ptr %12, align 4
+  %divtmp19 = fdiv float 1.000000e+00, %readtmp18
+  %calltmp20 = call %Rect @Rect.new_0(float %multmp, float %multmp13, float %divtmp16, float %divtmp19)
+  store %Rect %calltmp20, ptr %uv, align 4
+  %readtmp21 = load ptr, ptr %v, align 8
+  %13 = getelementptr inbounds %Verts, ptr %readtmp21, i32 0, i32 0
+  %readtmp22 = load ptr, ptr %13, align 8
+  %elemtemp = getelementptr inbounds [3 x %Vert], ptr %readtmp22, i32 0, i32 0
+  %14 = getelementptr inbounds %Vert, ptr %elemtemp, i32 0, i32 0
+  %readtmp23 = load ptr, ptr %self, align 8
+  %15 = getelementptr inbounds %MultiSprite, ptr %readtmp23, i32 0, i32 1
+  %16 = getelementptr inbounds %Vec2, ptr %15, i32 0, i32 0
+  %readtmp24 = load float, ptr %16, align 4
+  store float %readtmp24, ptr %14, align 4
+  %readtmp25 = load ptr, ptr %v, align 8
+  %17 = getelementptr inbounds %Verts, ptr %readtmp25, i32 0, i32 0
+  %readtmp26 = load ptr, ptr %17, align 8
+  %elemtemp27 = getelementptr inbounds [3 x %Vert], ptr %readtmp26, i32 0, i32 0
+  %18 = getelementptr inbounds %Vert, ptr %elemtemp27, i32 0, i32 1
+  %readtmp28 = load ptr, ptr %self, align 8
+  %19 = getelementptr inbounds %MultiSprite, ptr %readtmp28, i32 0, i32 1
+  %20 = getelementptr inbounds %Vec2, ptr %19, i32 0, i32 1
+  %readtmp29 = load float, ptr %20, align 4
+  store float %readtmp29, ptr %18, align 4
+  %readtmp30 = load ptr, ptr %v, align 8
+  %21 = getelementptr inbounds %Verts, ptr %readtmp30, i32 0, i32 0
+  %readtmp31 = load ptr, ptr %21, align 8
+  %elemtemp32 = getelementptr inbounds [3 x %Vert], ptr %readtmp31, i32 0, i32 0
+  %22 = getelementptr inbounds %Vert, ptr %elemtemp32, i32 0, i32 2
+  store float 0.000000e+00, ptr %22, align 4
+  %readtmp33 = load ptr, ptr %v, align 8
+  %23 = getelementptr inbounds %Verts, ptr %readtmp33, i32 0, i32 0
+  %readtmp34 = load ptr, ptr %23, align 8
+  %elemtemp35 = getelementptr inbounds [3 x %Vert], ptr %readtmp34, i32 0, i32 0
+  %24 = getelementptr inbounds %Vert, ptr %elemtemp35, i32 0, i32 3
+  %25 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 0
+  %readtmp36 = load float, ptr %25, align 4
+  store float %readtmp36, ptr %24, align 4
+  %readtmp37 = load ptr, ptr %v, align 8
+  %26 = getelementptr inbounds %Verts, ptr %readtmp37, i32 0, i32 0
+  %readtmp38 = load ptr, ptr %26, align 8
+  %elemtemp39 = getelementptr inbounds [3 x %Vert], ptr %readtmp38, i32 0, i32 0
+  %27 = getelementptr inbounds %Vert, ptr %elemtemp39, i32 0, i32 4
+  %28 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 1
+  %readtmp40 = load float, ptr %28, align 4
+  store float %readtmp40, ptr %27, align 4
+  %readtmp41 = load ptr, ptr %v, align 8
+  %29 = getelementptr inbounds %Verts, ptr %readtmp41, i32 0, i32 0
+  %readtmp42 = load ptr, ptr %29, align 8
+  %elemtemp43 = getelementptr inbounds [3 x %Vert], ptr %readtmp42, i32 0, i32 1
+  %30 = getelementptr inbounds %Vert, ptr %elemtemp43, i32 0, i32 0
+  %readtmp44 = load ptr, ptr %self, align 8
+  %31 = getelementptr inbounds %MultiSprite, ptr %readtmp44, i32 0, i32 1
+  %32 = getelementptr inbounds %Vec2, ptr %31, i32 0, i32 0
+  %readtmp45 = load float, ptr %32, align 4
+  %readtmp46 = load ptr, ptr %self, align 8
+  %33 = getelementptr inbounds %MultiSprite, ptr %readtmp46, i32 0, i32 0
+  %34 = getelementptr inbounds %Vec2, ptr %33, i32 0, i32 0
+  %readtmp47 = load float, ptr %34, align 4
+  %addtmp = fadd float %readtmp45, %readtmp47
+  store float %addtmp, ptr %30, align 4
+  %readtmp48 = load ptr, ptr %v, align 8
+  %35 = getelementptr inbounds %Verts, ptr %readtmp48, i32 0, i32 0
+  %readtmp49 = load ptr, ptr %35, align 8
+  %elemtemp50 = getelementptr inbounds [3 x %Vert], ptr %readtmp49, i32 0, i32 1
+  %36 = getelementptr inbounds %Vert, ptr %elemtemp50, i32 0, i32 1
+  %readtmp51 = load ptr, ptr %self, align 8
+  %37 = getelementptr inbounds %MultiSprite, ptr %readtmp51, i32 0, i32 1
+  %38 = getelementptr inbounds %Vec2, ptr %37, i32 0, i32 1
+  %readtmp52 = load float, ptr %38, align 4
+  %readtmp53 = load ptr, ptr %self, align 8
+  %39 = getelementptr inbounds %MultiSprite, ptr %readtmp53, i32 0, i32 0
+  %40 = getelementptr inbounds %Vec2, ptr %39, i32 0, i32 1
+  %readtmp54 = load float, ptr %40, align 4
+  %addtmp55 = fadd float %readtmp52, %readtmp54
+  store float %addtmp55, ptr %36, align 4
+  %readtmp56 = load ptr, ptr %v, align 8
+  %41 = getelementptr inbounds %Verts, ptr %readtmp56, i32 0, i32 0
+  %readtmp57 = load ptr, ptr %41, align 8
+  %elemtemp58 = getelementptr inbounds [3 x %Vert], ptr %readtmp57, i32 0, i32 1
+  %42 = getelementptr inbounds %Vert, ptr %elemtemp58, i32 0, i32 2
+  store float 0.000000e+00, ptr %42, align 4
+  %readtmp59 = load ptr, ptr %v, align 8
+  %43 = getelementptr inbounds %Verts, ptr %readtmp59, i32 0, i32 0
+  %readtmp60 = load ptr, ptr %43, align 8
+  %elemtemp61 = getelementptr inbounds [3 x %Vert], ptr %readtmp60, i32 0, i32 1
+  %44 = getelementptr inbounds %Vert, ptr %elemtemp61, i32 0, i32 3
+  %45 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 0
+  %readtmp62 = load float, ptr %45, align 4
+  %46 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 2
+  %readtmp63 = load float, ptr %46, align 4
+  %addtmp64 = fadd float %readtmp62, %readtmp63
+  store float %addtmp64, ptr %44, align 4
+  %readtmp65 = load ptr, ptr %v, align 8
+  %47 = getelementptr inbounds %Verts, ptr %readtmp65, i32 0, i32 0
+  %readtmp66 = load ptr, ptr %47, align 8
+  %elemtemp67 = getelementptr inbounds [3 x %Vert], ptr %readtmp66, i32 0, i32 1
+  %48 = getelementptr inbounds %Vert, ptr %elemtemp67, i32 0, i32 4
+  %49 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 1
+  %readtmp68 = load float, ptr %49, align 4
+  %50 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 3
+  %readtmp69 = load float, ptr %50, align 4
+  %addtmp70 = fadd float %readtmp68, %readtmp69
+  store float %addtmp70, ptr %48, align 4
+  %readtmp71 = load ptr, ptr %v, align 8
+  %51 = getelementptr inbounds %Verts, ptr %readtmp71, i32 0, i32 0
+  %readtmp72 = load ptr, ptr %51, align 8
+  %elemtemp73 = getelementptr inbounds [3 x %Vert], ptr %readtmp72, i32 0, i32 2
+  %52 = getelementptr inbounds %Vert, ptr %elemtemp73, i32 0, i32 0
+  %readtmp74 = load ptr, ptr %self, align 8
+  %53 = getelementptr inbounds %MultiSprite, ptr %readtmp74, i32 0, i32 1
+  %54 = getelementptr inbounds %Vec2, ptr %53, i32 0, i32 0
+  %readtmp75 = load float, ptr %54, align 4
+  store float %readtmp75, ptr %52, align 4
+  %readtmp76 = load ptr, ptr %v, align 8
+  %55 = getelementptr inbounds %Verts, ptr %readtmp76, i32 0, i32 0
+  %readtmp77 = load ptr, ptr %55, align 8
+  %elemtemp78 = getelementptr inbounds [3 x %Vert], ptr %readtmp77, i32 0, i32 2
+  %56 = getelementptr inbounds %Vert, ptr %elemtemp78, i32 0, i32 1
+  %readtmp79 = load ptr, ptr %self, align 8
+  %57 = getelementptr inbounds %MultiSprite, ptr %readtmp79, i32 0, i32 1
+  %58 = getelementptr inbounds %Vec2, ptr %57, i32 0, i32 1
+  %readtmp80 = load float, ptr %58, align 4
+  %readtmp81 = load ptr, ptr %self, align 8
+  %59 = getelementptr inbounds %MultiSprite, ptr %readtmp81, i32 0, i32 0
+  %60 = getelementptr inbounds %Vec2, ptr %59, i32 0, i32 1
+  %readtmp82 = load float, ptr %60, align 4
+  %addtmp83 = fadd float %readtmp80, %readtmp82
+  store float %addtmp83, ptr %56, align 4
+  %readtmp84 = load ptr, ptr %v, align 8
+  %61 = getelementptr inbounds %Verts, ptr %readtmp84, i32 0, i32 0
+  %readtmp85 = load ptr, ptr %61, align 8
+  %elemtemp86 = getelementptr inbounds [3 x %Vert], ptr %readtmp85, i32 0, i32 2
+  %62 = getelementptr inbounds %Vert, ptr %elemtemp86, i32 0, i32 2
+  store float 0.000000e+00, ptr %62, align 4
+  %readtmp87 = load ptr, ptr %v, align 8
+  %63 = getelementptr inbounds %Verts, ptr %readtmp87, i32 0, i32 0
+  %readtmp88 = load ptr, ptr %63, align 8
+  %elemtemp89 = getelementptr inbounds [3 x %Vert], ptr %readtmp88, i32 0, i32 2
+  %64 = getelementptr inbounds %Vert, ptr %elemtemp89, i32 0, i32 3
+  %65 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 0
+  %readtmp90 = load float, ptr %65, align 4
+  store float %readtmp90, ptr %64, align 4
+  %readtmp91 = load ptr, ptr %v, align 8
+  %66 = getelementptr inbounds %Verts, ptr %readtmp91, i32 0, i32 0
+  %readtmp92 = load ptr, ptr %66, align 8
+  %elemtemp93 = getelementptr inbounds [3 x %Vert], ptr %readtmp92, i32 0, i32 2
+  %67 = getelementptr inbounds %Vert, ptr %elemtemp93, i32 0, i32 4
+  %68 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 1
+  %readtmp94 = load float, ptr %68, align 4
+  %69 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 3
+  %readtmp95 = load float, ptr %69, align 4
+  %addtmp96 = fadd float %readtmp94, %readtmp95
+  store float %addtmp96, ptr %67, align 4
+  %readtmp97 = load ptr, ptr %v, align 8
+  %70 = getelementptr inbounds %Verts, ptr %readtmp97, i32 0, i32 0
+  %readtmp98 = load ptr, ptr %70, align 8
+  %elemtemp99 = getelementptr inbounds [3 x %Vert], ptr %readtmp98, i32 0, i32 3
+  %71 = getelementptr inbounds %Vert, ptr %elemtemp99, i32 0, i32 0
+  %readtmp100 = load ptr, ptr %self, align 8
+  %72 = getelementptr inbounds %MultiSprite, ptr %readtmp100, i32 0, i32 1
+  %73 = getelementptr inbounds %Vec2, ptr %72, i32 0, i32 0
+  %readtmp101 = load float, ptr %73, align 4
+  store float %readtmp101, ptr %71, align 4
+  %readtmp102 = load ptr, ptr %v, align 8
+  %74 = getelementptr inbounds %Verts, ptr %readtmp102, i32 0, i32 0
+  %readtmp103 = load ptr, ptr %74, align 8
+  %elemtemp104 = getelementptr inbounds [3 x %Vert], ptr %readtmp103, i32 0, i32 3
+  %75 = getelementptr inbounds %Vert, ptr %elemtemp104, i32 0, i32 1
+  %readtmp105 = load ptr, ptr %self, align 8
+  %76 = getelementptr inbounds %MultiSprite, ptr %readtmp105, i32 0, i32 1
+  %77 = getelementptr inbounds %Vec2, ptr %76, i32 0, i32 1
+  %readtmp106 = load float, ptr %77, align 4
+  store float %readtmp106, ptr %75, align 4
+  %readtmp107 = load ptr, ptr %v, align 8
+  %78 = getelementptr inbounds %Verts, ptr %readtmp107, i32 0, i32 0
+  %readtmp108 = load ptr, ptr %78, align 8
+  %elemtemp109 = getelementptr inbounds [3 x %Vert], ptr %readtmp108, i32 0, i32 3
+  %79 = getelementptr inbounds %Vert, ptr %elemtemp109, i32 0, i32 2
+  store float 0.000000e+00, ptr %79, align 4
+  %readtmp110 = load ptr, ptr %v, align 8
+  %80 = getelementptr inbounds %Verts, ptr %readtmp110, i32 0, i32 0
+  %readtmp111 = load ptr, ptr %80, align 8
+  %elemtemp112 = getelementptr inbounds [3 x %Vert], ptr %readtmp111, i32 0, i32 3
+  %81 = getelementptr inbounds %Vert, ptr %elemtemp112, i32 0, i32 3
+  %82 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 0
+  %readtmp113 = load float, ptr %82, align 4
+  store float %readtmp113, ptr %81, align 4
+  %readtmp114 = load ptr, ptr %v, align 8
+  %83 = getelementptr inbounds %Verts, ptr %readtmp114, i32 0, i32 0
+  %readtmp115 = load ptr, ptr %83, align 8
+  %elemtemp116 = getelementptr inbounds [3 x %Vert], ptr %readtmp115, i32 0, i32 3
+  %84 = getelementptr inbounds %Vert, ptr %elemtemp116, i32 0, i32 4
+  %85 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 1
+  %readtmp117 = load float, ptr %85, align 4
+  store float %readtmp117, ptr %84, align 4
+  %readtmp118 = load ptr, ptr %v, align 8
+  %86 = getelementptr inbounds %Verts, ptr %readtmp118, i32 0, i32 0
+  %readtmp119 = load ptr, ptr %86, align 8
+  %elemtemp120 = getelementptr inbounds [3 x %Vert], ptr %readtmp119, i32 0, i32 4
+  %87 = getelementptr inbounds %Vert, ptr %elemtemp120, i32 0, i32 0
+  %readtmp121 = load ptr, ptr %self, align 8
+  %88 = getelementptr inbounds %MultiSprite, ptr %readtmp121, i32 0, i32 1
+  %89 = getelementptr inbounds %Vec2, ptr %88, i32 0, i32 0
+  %readtmp122 = load float, ptr %89, align 4
+  %readtmp123 = load ptr, ptr %self, align 8
+  %90 = getelementptr inbounds %MultiSprite, ptr %readtmp123, i32 0, i32 0
+  %91 = getelementptr inbounds %Vec2, ptr %90, i32 0, i32 0
+  %readtmp124 = load float, ptr %91, align 4
+  %addtmp125 = fadd float %readtmp122, %readtmp124
+  store float %addtmp125, ptr %87, align 4
+  %readtmp126 = load ptr, ptr %v, align 8
+  %92 = getelementptr inbounds %Verts, ptr %readtmp126, i32 0, i32 0
+  %readtmp127 = load ptr, ptr %92, align 8
+  %elemtemp128 = getelementptr inbounds [3 x %Vert], ptr %readtmp127, i32 0, i32 4
+  %93 = getelementptr inbounds %Vert, ptr %elemtemp128, i32 0, i32 1
+  %readtmp129 = load ptr, ptr %self, align 8
+  %94 = getelementptr inbounds %MultiSprite, ptr %readtmp129, i32 0, i32 1
+  %95 = getelementptr inbounds %Vec2, ptr %94, i32 0, i32 1
+  %readtmp130 = load float, ptr %95, align 4
+  %readtmp131 = load ptr, ptr %self, align 8
+  %96 = getelementptr inbounds %MultiSprite, ptr %readtmp131, i32 0, i32 0
+  %97 = getelementptr inbounds %Vec2, ptr %96, i32 0, i32 1
+  %readtmp132 = load float, ptr %97, align 4
+  %addtmp133 = fadd float %readtmp130, %readtmp132
+  store float %addtmp133, ptr %93, align 4
+  %readtmp134 = load ptr, ptr %v, align 8
+  %98 = getelementptr inbounds %Verts, ptr %readtmp134, i32 0, i32 0
+  %readtmp135 = load ptr, ptr %98, align 8
+  %elemtemp136 = getelementptr inbounds [3 x %Vert], ptr %readtmp135, i32 0, i32 4
+  %99 = getelementptr inbounds %Vert, ptr %elemtemp136, i32 0, i32 2
+  store float 0.000000e+00, ptr %99, align 4
+  %readtmp137 = load ptr, ptr %v, align 8
+  %100 = getelementptr inbounds %Verts, ptr %readtmp137, i32 0, i32 0
+  %readtmp138 = load ptr, ptr %100, align 8
+  %elemtemp139 = getelementptr inbounds [3 x %Vert], ptr %readtmp138, i32 0, i32 4
+  %101 = getelementptr inbounds %Vert, ptr %elemtemp139, i32 0, i32 3
+  %102 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 0
+  %readtmp140 = load float, ptr %102, align 4
+  %103 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 2
+  %readtmp141 = load float, ptr %103, align 4
+  %addtmp142 = fadd float %readtmp140, %readtmp141
+  store float %addtmp142, ptr %101, align 4
+  %readtmp143 = load ptr, ptr %v, align 8
+  %104 = getelementptr inbounds %Verts, ptr %readtmp143, i32 0, i32 0
+  %readtmp144 = load ptr, ptr %104, align 8
+  %elemtemp145 = getelementptr inbounds [3 x %Vert], ptr %readtmp144, i32 0, i32 4
+  %105 = getelementptr inbounds %Vert, ptr %elemtemp145, i32 0, i32 4
+  %106 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 1
+  %readtmp146 = load float, ptr %106, align 4
+  %107 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 3
+  %readtmp147 = load float, ptr %107, align 4
+  %addtmp148 = fadd float %readtmp146, %readtmp147
+  store float %addtmp148, ptr %105, align 4
+  %readtmp149 = load ptr, ptr %v, align 8
+  %108 = getelementptr inbounds %Verts, ptr %readtmp149, i32 0, i32 0
+  %readtmp150 = load ptr, ptr %108, align 8
+  %elemtemp151 = getelementptr inbounds [3 x %Vert], ptr %readtmp150, i32 0, i32 5
+  %109 = getelementptr inbounds %Vert, ptr %elemtemp151, i32 0, i32 0
+  %readtmp152 = load ptr, ptr %self, align 8
+  %110 = getelementptr inbounds %MultiSprite, ptr %readtmp152, i32 0, i32 1
+  %111 = getelementptr inbounds %Vec2, ptr %110, i32 0, i32 0
+  %readtmp153 = load float, ptr %111, align 4
+  %readtmp154 = load ptr, ptr %self, align 8
+  %112 = getelementptr inbounds %MultiSprite, ptr %readtmp154, i32 0, i32 0
+  %113 = getelementptr inbounds %Vec2, ptr %112, i32 0, i32 0
+  %readtmp155 = load float, ptr %113, align 4
+  %addtmp156 = fadd float %readtmp153, %readtmp155
+  store float %addtmp156, ptr %109, align 4
+  %readtmp157 = load ptr, ptr %v, align 8
+  %114 = getelementptr inbounds %Verts, ptr %readtmp157, i32 0, i32 0
+  %readtmp158 = load ptr, ptr %114, align 8
+  %elemtemp159 = getelementptr inbounds [3 x %Vert], ptr %readtmp158, i32 0, i32 5
+  %115 = getelementptr inbounds %Vert, ptr %elemtemp159, i32 0, i32 1
+  %readtmp160 = load ptr, ptr %self, align 8
+  %116 = getelementptr inbounds %MultiSprite, ptr %readtmp160, i32 0, i32 1
+  %117 = getelementptr inbounds %Vec2, ptr %116, i32 0, i32 1
+  %readtmp161 = load float, ptr %117, align 4
+  store float %readtmp161, ptr %115, align 4
+  %readtmp162 = load ptr, ptr %v, align 8
+  %118 = getelementptr inbounds %Verts, ptr %readtmp162, i32 0, i32 0
+  %readtmp163 = load ptr, ptr %118, align 8
+  %elemtemp164 = getelementptr inbounds [3 x %Vert], ptr %readtmp163, i32 0, i32 5
+  %119 = getelementptr inbounds %Vert, ptr %elemtemp164, i32 0, i32 2
+  store float 0.000000e+00, ptr %119, align 4
+  %readtmp165 = load ptr, ptr %v, align 8
+  %120 = getelementptr inbounds %Verts, ptr %readtmp165, i32 0, i32 0
+  %readtmp166 = load ptr, ptr %120, align 8
+  %elemtemp167 = getelementptr inbounds [3 x %Vert], ptr %readtmp166, i32 0, i32 5
+  %121 = getelementptr inbounds %Vert, ptr %elemtemp167, i32 0, i32 3
+  %122 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 0
+  %readtmp168 = load float, ptr %122, align 4
+  %123 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 2
+  %readtmp169 = load float, ptr %123, align 4
+  %addtmp170 = fadd float %readtmp168, %readtmp169
+  store float %addtmp170, ptr %121, align 4
+  %readtmp171 = load ptr, ptr %v, align 8
+  %124 = getelementptr inbounds %Verts, ptr %readtmp171, i32 0, i32 0
+  %readtmp172 = load ptr, ptr %124, align 8
+  %elemtemp173 = getelementptr inbounds [3 x %Vert], ptr %readtmp172, i32 0, i32 5
+  %125 = getelementptr inbounds %Vert, ptr %elemtemp173, i32 0, i32 4
+  %126 = getelementptr inbounds %Rect, ptr %uv, i32 0, i32 1
+  %readtmp174 = load float, ptr %126, align 4
+  store float %readtmp174, ptr %125, align 4
+  %readtmp175 = load ptr, ptr %v, align 8
+  ret ptr %readtmp175
+}
+
+define %Rect @Rect.new_0(float %0, float %1, float %2, float %3) {
+entry:
+  %result = alloca %Rect, align 8
+  %4 = getelementptr inbounds %Rect, ptr %result, i32 0, i32 3
+  store float %3, ptr %4, align 4
+  %5 = getelementptr inbounds %Rect, ptr %result, i32 0, i32 2
+  store float %2, ptr %5, align 4
+  %6 = getelementptr inbounds %Rect, ptr %result, i32 0, i32 1
+  store float %1, ptr %6, align 4
+  %7 = getelementptr inbounds %Rect, ptr %result, i32 0, i32 0
+  store float %0, ptr %7, align 4
+  %readtmp = load %Rect, ptr %result, align 4
+  ret %Rect %readtmp
+}
+
+define void @SpriteBatch.draw_2(ptr %0, %Stars %1) {
+entry:
+  %entry1 = alloca %SBQueueEntry, align 8
+  %dr = alloca %Stars, align 8
+  %sb = alloca ptr, align 8
+  store %Stars %1, ptr %dr, align 8
+  store ptr %0, ptr %sb, align 8
+  %2 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 0
+  store i1 true, ptr %2, align 1
+  %3 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 2
+  %4 = getelementptr inbounds %Stars, ptr %dr, i32 0, i32 2
+  %readtmp = load ptr, ptr %4, align 8
+  store ptr %readtmp, ptr %3, align 8
+  %5 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 3
+  %6 = getelementptr inbounds %Stars, ptr %dr, i32 0, i32 3
+  %readtmp2 = load ptr, ptr %6, align 8
+  store ptr %readtmp2, ptr %5, align 8
+  %7 = getelementptr inbounds %SBQueueEntry, ptr %entry1, i32 0, i32 4
+  %readtmp3 = load %Stars, ptr %dr, align 8
+  %calltmp = call ptr @Stars.getVerts_0(ptr %dr)
+  store ptr %calltmp, ptr %7, align 8
+  %old = alloca i32, align 4
+  %readtmp4 = load ptr, ptr %sb, align 8
+  %8 = getelementptr inbounds %SpriteBatch, ptr %readtmp4, i32 0, i32 1
+  %readtmp5 = load ptr, ptr %8, align 8
+  %9 = getelementptr inbounds %SBQueue, ptr %readtmp5, i32 0, i32 1
+  %readtmp6 = load i32, ptr %9, align 4
+  store i32 %readtmp6, ptr %old, align 4
+  %readtmp7 = load ptr, ptr %sb, align 8
+  %10 = getelementptr inbounds %SpriteBatch, ptr %readtmp7, i32 0, i32 1
+  %readtmp8 = load ptr, ptr %10, align 8
+  %11 = getelementptr inbounds %SBQueue, ptr %readtmp8, i32 0, i32 1
+  %readtmp9 = load ptr, ptr %sb, align 8
+  %12 = getelementptr inbounds %SpriteBatch, ptr %readtmp9, i32 0, i32 1
+  %readtmp10 = load ptr, ptr %12, align 8
+  %13 = getelementptr inbounds %SBQueue, ptr %readtmp10, i32 0, i32 1
+  %readtmp11 = load i32, ptr %13, align 4
+  %addtmp = add i32 %readtmp11, 1
+  store i32 %addtmp, ptr %11, align 4
+  %readtmp12 = load ptr, ptr %sb, align 8
+  %14 = getelementptr inbounds %SpriteBatch, ptr %readtmp12, i32 0, i32 1
+  %readtmp13 = load ptr, ptr %14, align 8
+  %15 = getelementptr inbounds %SBQueue, ptr %readtmp13, i32 0, i32 0
+  %readtmp14 = load ptr, ptr %sb, align 8
+  %16 = getelementptr inbounds %SpriteBatch, ptr %readtmp14, i32 0, i32 1
+  %readtmp15 = load ptr, ptr %16, align 8
+  %17 = getelementptr inbounds %SBQueue, ptr %readtmp15, i32 0, i32 0
+  %readtmp16 = load ptr, ptr %17, align 8
+  %readtmp17 = load ptr, ptr %sb, align 8
+  %18 = getelementptr inbounds %SpriteBatch, ptr %readtmp17, i32 0, i32 1
+  %readtmp18 = load ptr, ptr %18, align 8
+  %calltmp19 = call i32 @SBQueue.getSize_0(ptr %readtmp18)
+  %calltmp20 = call ptr @realloc(ptr %readtmp16, i32 %calltmp19)
+  store ptr %calltmp20, ptr %15, align 8
+  %readtmp21 = load ptr, ptr %sb, align 8
+  %19 = getelementptr inbounds %SpriteBatch, ptr %readtmp21, i32 0, i32 1
+  %readtmp22 = load ptr, ptr %19, align 8
+  %readtmp23 = load i32, ptr %old, align 4
+  %calltmp24 = call ptr @SBQueue.getEntry_0(ptr %readtmp22, i32 %readtmp23)
+  %readtmp25 = load %SBQueueEntry, ptr %entry1, align 8
+  store %SBQueueEntry %readtmp25, ptr %calltmp24, align 8
+  ret void
+}
+
+define ptr @Stars.getVerts_0(ptr %0) {
+entry:
+  %self = alloca ptr, align 8
+  %toDraw = alloca ptr, align 8
+  store ptr %0, ptr %self, align 8
+  %calltmp = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Verts], ptr null, i32 1) to i32))
+  store ptr %calltmp, ptr %toDraw, align 8
+  %readtmp = load ptr, ptr %toDraw, align 8
+  %1 = getelementptr inbounds %Verts, ptr %readtmp, i32 0, i32 0
+  %calltmp1 = call ptr @calloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32), i32 600)
+  store ptr %calltmp1, ptr %1, align 8
+  %readtmp2 = load ptr, ptr %toDraw, align 8
+  %2 = getelementptr inbounds %Verts, ptr %readtmp2, i32 0, i32 1
+  store i32 600, ptr %2, align 4
+  %idx = alloca i32, align 4
+  store i32 0, ptr %idx, align 4
+  br label %dobody
+
+dobody:                                           ; preds = %dobody, %entry
+  %editing = alloca ptr, align 8
+  %current = alloca ptr, align 8
+  %readtmp3 = load ptr, ptr %toDraw, align 8
+  %3 = getelementptr inbounds %Verts, ptr %readtmp3, i32 0, i32 0
+  %readtmp4 = load ptr, ptr %3, align 8
+  %readtmp5 = load i32, ptr %idx, align 4
+  %multmp = mul i32 %readtmp5, mul (i32 ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32), i32 6)
+  %calltmp6 = call ptr @mem.add_3(ptr %readtmp4, i32 %multmp)
+  store ptr %calltmp6, ptr %editing, align 8
+  %readtmp7 = load ptr, ptr %self, align 8
+  %4 = getelementptr inbounds %Stars, ptr %readtmp7, i32 0, i32 1
+  %readtmp8 = load i32, ptr %idx, align 4
+  %multmp9 = mul i32 %readtmp8, ptrtoint (ptr getelementptr inbounds ([1 x %Star], ptr null, i32 1) to i32)
+  %calltmp10 = call ptr @mem.add_0(ptr %4, i32 %multmp9)
+  store ptr %calltmp10, ptr %current, align 8
+  %readtmp11 = load ptr, ptr %editing, align 8
+  %elemtemp = getelementptr inbounds [6 x %Vert], ptr %readtmp11, i32 0, i32 0
+  %5 = getelementptr inbounds %Vert, ptr %elemtemp, i32 0, i32 0
+  %readtmp12 = load ptr, ptr %current, align 8
+  %6 = getelementptr inbounds %Star, ptr %readtmp12, i32 0, i32 2
+  %7 = getelementptr inbounds %Vec2, ptr %6, i32 0, i32 0
+  %readtmp13 = load float, ptr %7, align 4
+  %addtmp = fadd float %readtmp13, 3.000000e+00
+  store float %addtmp, ptr %5, align 4
+  %readtmp14 = load ptr, ptr %editing, align 8
+  %elemtemp15 = getelementptr inbounds [6 x %Vert], ptr %readtmp14, i32 0, i32 0
+  %8 = getelementptr inbounds %Vert, ptr %elemtemp15, i32 0, i32 1
+  %readtmp16 = load ptr, ptr %current, align 8
+  %9 = getelementptr inbounds %Star, ptr %readtmp16, i32 0, i32 2
+  %10 = getelementptr inbounds %Vec2, ptr %9, i32 0, i32 1
+  %readtmp17 = load float, ptr %10, align 4
+  %readtmp18 = load ptr, ptr %current, align 8
+  %11 = getelementptr inbounds %Star, ptr %readtmp18, i32 0, i32 0
+  %readtmp19 = load float, ptr %11, align 4
+  %multmp20 = fmul float %readtmp19, 3.000000e+00
+  %addtmp21 = fadd float %readtmp17, %multmp20
+  store float %addtmp21, ptr %8, align 4
+  %readtmp22 = load ptr, ptr %editing, align 8
+  %elemtemp23 = getelementptr inbounds [6 x %Vert], ptr %readtmp22, i32 0, i32 0
+  %12 = getelementptr inbounds %Vert, ptr %elemtemp23, i32 0, i32 5
+  %readtmp24 = load ptr, ptr %current, align 8
+  %13 = getelementptr inbounds %Star, ptr %readtmp24, i32 0, i32 3
+  %14 = getelementptr inbounds %Color, ptr %13, i32 0, i32 0
+  %readtmp25 = load float, ptr %14, align 4
+  store float %readtmp25, ptr %12, align 4
+  %readtmp26 = load ptr, ptr %editing, align 8
+  %elemtemp27 = getelementptr inbounds [6 x %Vert], ptr %readtmp26, i32 0, i32 0
+  %15 = getelementptr inbounds %Vert, ptr %elemtemp27, i32 0, i32 6
+  %readtmp28 = load ptr, ptr %current, align 8
+  %16 = getelementptr inbounds %Star, ptr %readtmp28, i32 0, i32 3
+  %17 = getelementptr inbounds %Color, ptr %16, i32 0, i32 1
+  %readtmp29 = load float, ptr %17, align 4
+  store float %readtmp29, ptr %15, align 4
+  %readtmp30 = load ptr, ptr %editing, align 8
+  %elemtemp31 = getelementptr inbounds [6 x %Vert], ptr %readtmp30, i32 0, i32 0
+  %18 = getelementptr inbounds %Vert, ptr %elemtemp31, i32 0, i32 7
+  %readtmp32 = load ptr, ptr %current, align 8
+  %19 = getelementptr inbounds %Star, ptr %readtmp32, i32 0, i32 3
+  %20 = getelementptr inbounds %Color, ptr %19, i32 0, i32 2
+  %readtmp33 = load float, ptr %20, align 4
+  store float %readtmp33, ptr %18, align 4
+  %readtmp34 = load ptr, ptr %editing, align 8
+  %elemtemp35 = getelementptr inbounds [6 x %Vert], ptr %readtmp34, i32 0, i32 0
+  %21 = getelementptr inbounds %Vert, ptr %elemtemp35, i32 0, i32 8
+  store float 1.000000e+00, ptr %21, align 4
+  %readtmp36 = load ptr, ptr %editing, align 8
+  %elemtemp37 = getelementptr inbounds [6 x %Vert], ptr %readtmp36, i32 0, i32 1
+  %22 = getelementptr inbounds %Vert, ptr %elemtemp37, i32 0, i32 0
+  %readtmp38 = load ptr, ptr %current, align 8
+  %23 = getelementptr inbounds %Star, ptr %readtmp38, i32 0, i32 2
+  %24 = getelementptr inbounds %Vec2, ptr %23, i32 0, i32 0
+  %readtmp39 = load float, ptr %24, align 4
+  store float %readtmp39, ptr %22, align 4
+  %readtmp40 = load ptr, ptr %editing, align 8
+  %elemtemp41 = getelementptr inbounds [6 x %Vert], ptr %readtmp40, i32 0, i32 1
+  %25 = getelementptr inbounds %Vert, ptr %elemtemp41, i32 0, i32 1
+  %readtmp42 = load ptr, ptr %current, align 8
+  %26 = getelementptr inbounds %Star, ptr %readtmp42, i32 0, i32 2
+  %27 = getelementptr inbounds %Vec2, ptr %26, i32 0, i32 1
+  %readtmp43 = load float, ptr %27, align 4
+  store float %readtmp43, ptr %25, align 4
+  %readtmp44 = load ptr, ptr %editing, align 8
+  %elemtemp45 = getelementptr inbounds [6 x %Vert], ptr %readtmp44, i32 0, i32 1
+  %28 = getelementptr inbounds %Vert, ptr %elemtemp45, i32 0, i32 8
+  store float 0.000000e+00, ptr %28, align 4
+  %readtmp46 = load ptr, ptr %editing, align 8
+  %elemtemp47 = getelementptr inbounds [6 x %Vert], ptr %readtmp46, i32 0, i32 1
+  %29 = getelementptr inbounds %Vert, ptr %elemtemp47, i32 0, i32 5
+  %readtmp48 = load ptr, ptr %current, align 8
+  %30 = getelementptr inbounds %Star, ptr %readtmp48, i32 0, i32 3
+  %31 = getelementptr inbounds %Color, ptr %30, i32 0, i32 0
+  %readtmp49 = load float, ptr %31, align 4
+  store float %readtmp49, ptr %29, align 4
+  %readtmp50 = load ptr, ptr %editing, align 8
+  %elemtemp51 = getelementptr inbounds [6 x %Vert], ptr %readtmp50, i32 0, i32 1
+  %32 = getelementptr inbounds %Vert, ptr %elemtemp51, i32 0, i32 6
+  %readtmp52 = load ptr, ptr %current, align 8
+  %33 = getelementptr inbounds %Star, ptr %readtmp52, i32 0, i32 3
+  %34 = getelementptr inbounds %Color, ptr %33, i32 0, i32 1
+  %readtmp53 = load float, ptr %34, align 4
+  store float %readtmp53, ptr %32, align 4
+  %readtmp54 = load ptr, ptr %editing, align 8
+  %elemtemp55 = getelementptr inbounds [6 x %Vert], ptr %readtmp54, i32 0, i32 1
+  %35 = getelementptr inbounds %Vert, ptr %elemtemp55, i32 0, i32 7
+  %readtmp56 = load ptr, ptr %current, align 8
+  %36 = getelementptr inbounds %Star, ptr %readtmp56, i32 0, i32 3
+  %37 = getelementptr inbounds %Color, ptr %36, i32 0, i32 2
+  %readtmp57 = load float, ptr %37, align 4
+  store float %readtmp57, ptr %35, align 4
+  %readtmp58 = load ptr, ptr %editing, align 8
+  %elemtemp59 = getelementptr inbounds [6 x %Vert], ptr %readtmp58, i32 0, i32 2
+  %38 = getelementptr inbounds %Vert, ptr %elemtemp59, i32 0, i32 0
+  %readtmp60 = load ptr, ptr %current, align 8
+  %39 = getelementptr inbounds %Star, ptr %readtmp60, i32 0, i32 2
+  %40 = getelementptr inbounds %Vec2, ptr %39, i32 0, i32 0
+  %readtmp61 = load float, ptr %40, align 4
+  %addtmp62 = fadd float %readtmp61, 3.000000e+00
+  store float %addtmp62, ptr %38, align 4
+  %readtmp63 = load ptr, ptr %editing, align 8
+  %elemtemp64 = getelementptr inbounds [6 x %Vert], ptr %readtmp63, i32 0, i32 2
+  %41 = getelementptr inbounds %Vert, ptr %elemtemp64, i32 0, i32 1
+  %readtmp65 = load ptr, ptr %current, align 8
+  %42 = getelementptr inbounds %Star, ptr %readtmp65, i32 0, i32 2
+  %43 = getelementptr inbounds %Vec2, ptr %42, i32 0, i32 1
+  %readtmp66 = load float, ptr %43, align 4
+  store float %readtmp66, ptr %41, align 4
+  %readtmp67 = load ptr, ptr %editing, align 8
+  %elemtemp68 = getelementptr inbounds [6 x %Vert], ptr %readtmp67, i32 0, i32 2
+  %44 = getelementptr inbounds %Vert, ptr %elemtemp68, i32 0, i32 8
+  store float 0.000000e+00, ptr %44, align 4
+  %readtmp69 = load ptr, ptr %editing, align 8
+  %elemtemp70 = getelementptr inbounds [6 x %Vert], ptr %readtmp69, i32 0, i32 2
+  %45 = getelementptr inbounds %Vert, ptr %elemtemp70, i32 0, i32 5
+  %readtmp71 = load ptr, ptr %current, align 8
+  %46 = getelementptr inbounds %Star, ptr %readtmp71, i32 0, i32 3
+  %47 = getelementptr inbounds %Color, ptr %46, i32 0, i32 0
+  %readtmp72 = load float, ptr %47, align 4
+  store float %readtmp72, ptr %45, align 4
+  %readtmp73 = load ptr, ptr %editing, align 8
+  %elemtemp74 = getelementptr inbounds [6 x %Vert], ptr %readtmp73, i32 0, i32 2
+  %48 = getelementptr inbounds %Vert, ptr %elemtemp74, i32 0, i32 6
+  %readtmp75 = load ptr, ptr %current, align 8
+  %49 = getelementptr inbounds %Star, ptr %readtmp75, i32 0, i32 3
+  %50 = getelementptr inbounds %Color, ptr %49, i32 0, i32 1
+  %readtmp76 = load float, ptr %50, align 4
+  store float %readtmp76, ptr %48, align 4
+  %readtmp77 = load ptr, ptr %editing, align 8
+  %elemtemp78 = getelementptr inbounds [6 x %Vert], ptr %readtmp77, i32 0, i32 2
+  %51 = getelementptr inbounds %Vert, ptr %elemtemp78, i32 0, i32 7
+  %readtmp79 = load ptr, ptr %current, align 8
+  %52 = getelementptr inbounds %Star, ptr %readtmp79, i32 0, i32 3
+  %53 = getelementptr inbounds %Color, ptr %52, i32 0, i32 2
+  %readtmp80 = load float, ptr %53, align 4
+  store float %readtmp80, ptr %51, align 4
+  %readtmp81 = load ptr, ptr %editing, align 8
+  %elemtemp82 = getelementptr inbounds [6 x %Vert], ptr %readtmp81, i32 0, i32 3
+  %54 = getelementptr inbounds %Vert, ptr %elemtemp82, i32 0, i32 0
+  %readtmp83 = load ptr, ptr %current, align 8
+  %55 = getelementptr inbounds %Star, ptr %readtmp83, i32 0, i32 2
+  %56 = getelementptr inbounds %Vec2, ptr %55, i32 0, i32 0
+  %readtmp84 = load float, ptr %56, align 4
+  %addtmp85 = fadd float %readtmp84, 3.000000e+00
+  store float %addtmp85, ptr %54, align 4
+  %readtmp86 = load ptr, ptr %editing, align 8
+  %elemtemp87 = getelementptr inbounds [6 x %Vert], ptr %readtmp86, i32 0, i32 3
+  %57 = getelementptr inbounds %Vert, ptr %elemtemp87, i32 0, i32 1
+  %readtmp88 = load ptr, ptr %current, align 8
+  %58 = getelementptr inbounds %Star, ptr %readtmp88, i32 0, i32 2
+  %59 = getelementptr inbounds %Vec2, ptr %58, i32 0, i32 1
+  %readtmp89 = load float, ptr %59, align 4
+  %readtmp90 = load ptr, ptr %current, align 8
+  %60 = getelementptr inbounds %Star, ptr %readtmp90, i32 0, i32 0
+  %readtmp91 = load float, ptr %60, align 4
+  %multmp92 = fmul float %readtmp91, 3.000000e+00
+  %addtmp93 = fadd float %readtmp89, %multmp92
+  store float %addtmp93, ptr %57, align 4
+  %readtmp94 = load ptr, ptr %editing, align 8
+  %elemtemp95 = getelementptr inbounds [6 x %Vert], ptr %readtmp94, i32 0, i32 3
+  %61 = getelementptr inbounds %Vert, ptr %elemtemp95, i32 0, i32 8
+  store float 1.000000e+00, ptr %61, align 4
+  %readtmp96 = load ptr, ptr %editing, align 8
+  %elemtemp97 = getelementptr inbounds [6 x %Vert], ptr %readtmp96, i32 0, i32 3
+  %62 = getelementptr inbounds %Vert, ptr %elemtemp97, i32 0, i32 5
+  %readtmp98 = load ptr, ptr %current, align 8
+  %63 = getelementptr inbounds %Star, ptr %readtmp98, i32 0, i32 3
+  %64 = getelementptr inbounds %Color, ptr %63, i32 0, i32 0
+  %readtmp99 = load float, ptr %64, align 4
+  store float %readtmp99, ptr %62, align 4
+  %readtmp100 = load ptr, ptr %editing, align 8
+  %elemtemp101 = getelementptr inbounds [6 x %Vert], ptr %readtmp100, i32 0, i32 3
+  %65 = getelementptr inbounds %Vert, ptr %elemtemp101, i32 0, i32 6
+  %readtmp102 = load ptr, ptr %current, align 8
+  %66 = getelementptr inbounds %Star, ptr %readtmp102, i32 0, i32 3
+  %67 = getelementptr inbounds %Color, ptr %66, i32 0, i32 1
+  %readtmp103 = load float, ptr %67, align 4
+  store float %readtmp103, ptr %65, align 4
+  %readtmp104 = load ptr, ptr %editing, align 8
+  %elemtemp105 = getelementptr inbounds [6 x %Vert], ptr %readtmp104, i32 0, i32 3
+  %68 = getelementptr inbounds %Vert, ptr %elemtemp105, i32 0, i32 7
+  %readtmp106 = load ptr, ptr %current, align 8
+  %69 = getelementptr inbounds %Star, ptr %readtmp106, i32 0, i32 3
+  %70 = getelementptr inbounds %Color, ptr %69, i32 0, i32 2
+  %readtmp107 = load float, ptr %70, align 4
+  store float %readtmp107, ptr %68, align 4
+  %readtmp108 = load ptr, ptr %editing, align 8
+  %elemtemp109 = getelementptr inbounds [6 x %Vert], ptr %readtmp108, i32 0, i32 4
+  %71 = getelementptr inbounds %Vert, ptr %elemtemp109, i32 0, i32 0
+  %readtmp110 = load ptr, ptr %current, align 8
+  %72 = getelementptr inbounds %Star, ptr %readtmp110, i32 0, i32 2
+  %73 = getelementptr inbounds %Vec2, ptr %72, i32 0, i32 0
+  %readtmp111 = load float, ptr %73, align 4
+  store float %readtmp111, ptr %71, align 4
+  %readtmp112 = load ptr, ptr %editing, align 8
+  %elemtemp113 = getelementptr inbounds [6 x %Vert], ptr %readtmp112, i32 0, i32 4
+  %74 = getelementptr inbounds %Vert, ptr %elemtemp113, i32 0, i32 1
+  %readtmp114 = load ptr, ptr %current, align 8
+  %75 = getelementptr inbounds %Star, ptr %readtmp114, i32 0, i32 2
+  %76 = getelementptr inbounds %Vec2, ptr %75, i32 0, i32 1
+  %readtmp115 = load float, ptr %76, align 4
+  store float %readtmp115, ptr %74, align 4
+  %readtmp116 = load ptr, ptr %editing, align 8
+  %elemtemp117 = getelementptr inbounds [6 x %Vert], ptr %readtmp116, i32 0, i32 4
+  %77 = getelementptr inbounds %Vert, ptr %elemtemp117, i32 0, i32 8
+  store float 0.000000e+00, ptr %77, align 4
+  %readtmp118 = load ptr, ptr %editing, align 8
+  %elemtemp119 = getelementptr inbounds [6 x %Vert], ptr %readtmp118, i32 0, i32 4
+  %78 = getelementptr inbounds %Vert, ptr %elemtemp119, i32 0, i32 5
+  %readtmp120 = load ptr, ptr %current, align 8
+  %79 = getelementptr inbounds %Star, ptr %readtmp120, i32 0, i32 3
+  %80 = getelementptr inbounds %Color, ptr %79, i32 0, i32 0
+  %readtmp121 = load float, ptr %80, align 4
+  store float %readtmp121, ptr %78, align 4
+  %readtmp122 = load ptr, ptr %editing, align 8
+  %elemtemp123 = getelementptr inbounds [6 x %Vert], ptr %readtmp122, i32 0, i32 4
+  %81 = getelementptr inbounds %Vert, ptr %elemtemp123, i32 0, i32 6
+  %readtmp124 = load ptr, ptr %current, align 8
+  %82 = getelementptr inbounds %Star, ptr %readtmp124, i32 0, i32 3
+  %83 = getelementptr inbounds %Color, ptr %82, i32 0, i32 1
+  %readtmp125 = load float, ptr %83, align 4
+  store float %readtmp125, ptr %81, align 4
+  %readtmp126 = load ptr, ptr %editing, align 8
+  %elemtemp127 = getelementptr inbounds [6 x %Vert], ptr %readtmp126, i32 0, i32 4
+  %84 = getelementptr inbounds %Vert, ptr %elemtemp127, i32 0, i32 7
+  %readtmp128 = load ptr, ptr %current, align 8
+  %85 = getelementptr inbounds %Star, ptr %readtmp128, i32 0, i32 3
+  %86 = getelementptr inbounds %Color, ptr %85, i32 0, i32 2
+  %readtmp129 = load float, ptr %86, align 4
+  store float %readtmp129, ptr %84, align 4
+  %readtmp130 = load ptr, ptr %editing, align 8
+  %elemtemp131 = getelementptr inbounds [6 x %Vert], ptr %readtmp130, i32 0, i32 5
+  %87 = getelementptr inbounds %Vert, ptr %elemtemp131, i32 0, i32 0
+  %readtmp132 = load ptr, ptr %current, align 8
+  %88 = getelementptr inbounds %Star, ptr %readtmp132, i32 0, i32 2
+  %89 = getelementptr inbounds %Vec2, ptr %88, i32 0, i32 0
+  %readtmp133 = load float, ptr %89, align 4
+  store float %readtmp133, ptr %87, align 4
+  %readtmp134 = load ptr, ptr %editing, align 8
+  %elemtemp135 = getelementptr inbounds [6 x %Vert], ptr %readtmp134, i32 0, i32 5
+  %90 = getelementptr inbounds %Vert, ptr %elemtemp135, i32 0, i32 1
+  %readtmp136 = load ptr, ptr %current, align 8
+  %91 = getelementptr inbounds %Star, ptr %readtmp136, i32 0, i32 2
+  %92 = getelementptr inbounds %Vec2, ptr %91, i32 0, i32 1
+  %readtmp137 = load float, ptr %92, align 4
+  %readtmp138 = load ptr, ptr %current, align 8
+  %93 = getelementptr inbounds %Star, ptr %readtmp138, i32 0, i32 0
+  %readtmp139 = load float, ptr %93, align 4
+  %multmp140 = fmul float %readtmp139, 3.000000e+00
+  %addtmp141 = fadd float %readtmp137, %multmp140
+  store float %addtmp141, ptr %90, align 4
+  %readtmp142 = load ptr, ptr %editing, align 8
+  %elemtemp143 = getelementptr inbounds [6 x %Vert], ptr %readtmp142, i32 0, i32 5
+  %94 = getelementptr inbounds %Vert, ptr %elemtemp143, i32 0, i32 8
+  store float 1.000000e+00, ptr %94, align 4
+  %readtmp144 = load ptr, ptr %editing, align 8
+  %elemtemp145 = getelementptr inbounds [6 x %Vert], ptr %readtmp144, i32 0, i32 5
+  %95 = getelementptr inbounds %Vert, ptr %elemtemp145, i32 0, i32 5
+  %readtmp146 = load ptr, ptr %current, align 8
+  %96 = getelementptr inbounds %Star, ptr %readtmp146, i32 0, i32 3
+  %97 = getelementptr inbounds %Color, ptr %96, i32 0, i32 0
+  %readtmp147 = load float, ptr %97, align 4
+  store float %readtmp147, ptr %95, align 4
+  %readtmp148 = load ptr, ptr %editing, align 8
+  %elemtemp149 = getelementptr inbounds [6 x %Vert], ptr %readtmp148, i32 0, i32 5
+  %98 = getelementptr inbounds %Vert, ptr %elemtemp149, i32 0, i32 6
+  %readtmp150 = load ptr, ptr %current, align 8
+  %99 = getelementptr inbounds %Star, ptr %readtmp150, i32 0, i32 3
+  %100 = getelementptr inbounds %Color, ptr %99, i32 0, i32 1
+  %readtmp151 = load float, ptr %100, align 4
+  store float %readtmp151, ptr %98, align 4
+  %readtmp152 = load ptr, ptr %editing, align 8
+  %elemtemp153 = getelementptr inbounds [6 x %Vert], ptr %readtmp152, i32 0, i32 5
+  %101 = getelementptr inbounds %Vert, ptr %elemtemp153, i32 0, i32 7
+  %readtmp154 = load ptr, ptr %current, align 8
+  %102 = getelementptr inbounds %Star, ptr %readtmp154, i32 0, i32 3
+  %103 = getelementptr inbounds %Color, ptr %102, i32 0, i32 2
+  %readtmp155 = load float, ptr %103, align 4
+  store float %readtmp155, ptr %101, align 4
+  %readtmp156 = load i32, ptr %idx, align 4
+  %addtmp157 = add i32 %readtmp156, 1
+  store i32 %addtmp157, ptr %idx, align 4
+  %readtmp158 = load i32, ptr %idx, align 4
+  %lttmp = icmp ult i32 %readtmp158, 100
+  %docond = icmp ne i1 %lttmp, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  %readtmp159 = load ptr, ptr %toDraw, align 8
+  ret ptr %readtmp159
+}
+
+define ptr @mem.add_3(ptr %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, ptr %0
+  ret i32 %addtmp
+}
+
+define void @GFXContext.clear_0(ptr %0) {
+entry:
+  %ctx = alloca ptr, align 8
+  store ptr %0, ptr %ctx, align 8
+  %readtmp = load ptr, ptr %ctx, align 8
+  %1 = getelementptr inbounds %GFXContext, ptr %readtmp, i32 0, i32 1
+  %2 = getelementptr inbounds %Color, ptr %1, i32 0, i32 0
+  %readtmp1 = load float, ptr %2, align 4
+  %readtmp2 = load ptr, ptr %ctx, align 8
+  %3 = getelementptr inbounds %GFXContext, ptr %readtmp2, i32 0, i32 1
+  %4 = getelementptr inbounds %Color, ptr %3, i32 0, i32 1
+  %readtmp3 = load float, ptr %4, align 4
+  %readtmp4 = load ptr, ptr %ctx, align 8
+  %5 = getelementptr inbounds %GFXContext, ptr %readtmp4, i32 0, i32 1
+  %6 = getelementptr inbounds %Color, ptr %5, i32 0, i32 2
+  %readtmp5 = load float, ptr %6, align 4
+  %readtmp6 = load ptr, ptr %ctx, align 8
+  %7 = getelementptr inbounds %GFXContext, ptr %readtmp6, i32 0, i32 1
+  %8 = getelementptr inbounds %Color, ptr %7, i32 0, i32 3
+  %readtmp7 = load float, ptr %8, align 4
+  %calltmp = call void @glClearColor(float %readtmp1, float %readtmp3, float %readtmp5, float %readtmp7)
+  %calltmp8 = call void @glClear(i32 16384)
+  ret void
+}
+
+define void @SpriteBatch.finish_0(ptr %0) {
+entry:
+  %sb = alloca ptr, align 8
+  store ptr %0, ptr %sb, align 8
+  %idx = alloca i32, align 4
+  %readtmp = load ptr, ptr %sb, align 8
+  %1 = getelementptr inbounds %SpriteBatch, ptr %readtmp, i32 0, i32 1
+  %readtmp1 = load ptr, ptr %1, align 8
+  %2 = getelementptr inbounds %SBQueue, ptr %readtmp1, i32 0, i32 1
+  %ifcond = icmp ne ptr %2, i1 false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  store i32 0, ptr %idx, align 4
+  br label %dobody
+
+ifmerge:                                          ; preds = %domerge, %entry
+  %calltmp41 = call void @glEnable(i32 3042)
+  %calltmp42 = call void @glBlendFunc(i32 770, i32 771)
+  %readtmp43 = load ptr, ptr %sb, align 8
+  %3 = getelementptr inbounds %SpriteBatch, ptr %readtmp43, i32 0, i32 3
+  %readtmp44 = load i32, ptr %3, align 4
+  %readtmp45 = load ptr, ptr %sb, align 8
+  %4 = getelementptr inbounds %SpriteBatch, ptr %readtmp45, i32 0, i32 1
+  %readtmp46 = load ptr, ptr %4, align 8
+  %5 = getelementptr inbounds %SBQueue, ptr %readtmp46, i32 0, i32 1
+  %readtmp47 = load i32, ptr %5, align 4
+  %eqtmp48 = icmp ne i32 %readtmp47, %readtmp44
+  %ifcond49 = icmp ne i1 %eqtmp48, false
+  br i1 %ifcond49, label %ifbody50, label %ifmerge51
+
+dobody:                                           ; preds = %ifmerge20, %ifbody
+  %readtmp2 = load ptr, ptr %sb, align 8
+  %6 = getelementptr inbounds %SpriteBatch, ptr %readtmp2, i32 0, i32 1
+  %readtmp3 = load ptr, ptr %6, align 8
+  %readtmp4 = load i32, ptr %idx, align 4
+  %calltmp = call ptr @SBQueue.getEntry_0(ptr %readtmp3, i32 %readtmp4)
+  %7 = getelementptr inbounds %SBQueueEntry, ptr %calltmp, i32 0, i32 0
+  store i1 true, ptr %7, align 1
+  %readtmp5 = load ptr, ptr %sb, align 8
+  %8 = getelementptr inbounds %SpriteBatch, ptr %readtmp5, i32 0, i32 1
+  %readtmp6 = load ptr, ptr %8, align 8
+  %readtmp7 = load i32, ptr %idx, align 4
+  %calltmp8 = call ptr @SBQueue.getEntry_0(ptr %readtmp6, i32 %readtmp7)
+  %9 = getelementptr inbounds %SBQueueEntry, ptr %calltmp8, i32 0, i32 1
+  %readtmp9 = load ptr, ptr %sb, align 8
+  %10 = getelementptr inbounds %SpriteBatch, ptr %readtmp9, i32 0, i32 1
+  %readtmp10 = load ptr, ptr %10, align 8
+  %readtmp11 = load i32, ptr %idx, align 4
+  %calltmp12 = call ptr @SBQueue.getEntry_0(ptr %readtmp10, i32 %readtmp11)
+  %calltmp13 = call i32 @SBQueueEntry.getHash_0(ptr %calltmp12)
+  store i32 %calltmp13, ptr %9, align 4
+  %readtmp14 = load i32, ptr %idx, align 4
+  %readtmp15 = load ptr, ptr %sb, align 8
+  %11 = getelementptr inbounds %SpriteBatch, ptr %readtmp15, i32 0, i32 0
+  %readtmp16 = load ptr, ptr %11, align 8
+  %12 = getelementptr inbounds %SBQueue, ptr %readtmp16, i32 0, i32 1
+  %readtmp17 = load i32, ptr %12, align 4
+  %lttmp = icmp ult i32 %readtmp14, %readtmp17
+  %ifcond18 = icmp ne i1 %lttmp, false
+  br i1 %ifcond18, label %ifbody19, label %ifmerge20
+
+domerge:                                          ; preds = %ifmerge20
+  br label %ifmerge
+
+ifbody19:                                         ; preds = %dobody
+  %readtmp21 = load ptr, ptr %sb, align 8
+  %13 = getelementptr inbounds %SpriteBatch, ptr %readtmp21, i32 0, i32 1
+  %readtmp22 = load ptr, ptr %13, align 8
+  %readtmp23 = load i32, ptr %idx, align 4
+  %calltmp24 = call ptr @SBQueue.getEntry_0(ptr %readtmp22, i32 %readtmp23)
+  %14 = getelementptr inbounds %SBQueueEntry, ptr %calltmp24, i32 0, i32 0
+  %readtmp25 = load ptr, ptr %sb, align 8
+  %15 = getelementptr inbounds %SpriteBatch, ptr %readtmp25, i32 0, i32 1
+  %readtmp26 = load ptr, ptr %15, align 8
+  %readtmp27 = load i32, ptr %idx, align 4
+  %calltmp28 = call ptr @SBQueue.getEntry_0(ptr %readtmp26, i32 %readtmp27)
+  %16 = getelementptr inbounds %SBQueueEntry, ptr %calltmp28, i32 0, i32 1
+  %readtmp29 = load i32, ptr %16, align 4
+  %readtmp30 = load ptr, ptr %sb, align 8
+  %17 = getelementptr inbounds %SpriteBatch, ptr %readtmp30, i32 0, i32 0
+  %readtmp31 = load ptr, ptr %17, align 8
+  %readtmp32 = load i32, ptr %idx, align 4
+  %calltmp33 = call ptr @SBQueue.getEntry_0(ptr %readtmp31, i32 %readtmp32)
+  %18 = getelementptr inbounds %SBQueueEntry, ptr %calltmp33, i32 0, i32 1
+  %readtmp34 = load i32, ptr %18, align 4
+  %eqtmp = icmp ne i32 %readtmp34, %readtmp29
+  store i1 %eqtmp, ptr %14, align 1
+  br label %ifmerge20
+
+ifmerge20:                                        ; preds = %ifbody19, %dobody
+  %readtmp35 = load i32, ptr %idx, align 4
+  %addtmp = add i32 %readtmp35, 1
+  store i32 %addtmp, ptr %idx, align 4
+  %readtmp36 = load i32, ptr %idx, align 4
+  %readtmp37 = load ptr, ptr %sb, align 8
+  %19 = getelementptr inbounds %SpriteBatch, ptr %readtmp37, i32 0, i32 1
+  %readtmp38 = load ptr, ptr %19, align 8
+  %20 = getelementptr inbounds %SBQueue, ptr %readtmp38, i32 0, i32 1
+  %readtmp39 = load i32, ptr %20, align 4
+  %lttmp40 = icmp ult i32 %readtmp36, %readtmp39
+  %docond = icmp ne i1 %lttmp40, false
+  br i1 %docond, label %dobody, label %domerge
+
+ifbody50:                                         ; preds = %ifmerge
+  %target = alloca i32, align 4
+  %readtmp52 = load ptr, ptr %sb, align 8
+  %21 = getelementptr inbounds %SpriteBatch, ptr %readtmp52, i32 0, i32 1
+  %readtmp53 = load ptr, ptr %21, align 8
+  %22 = getelementptr inbounds %SBQueue, ptr %readtmp53, i32 0, i32 1
+  %readtmp54 = load i32, ptr %22, align 4
+  store i32 %readtmp54, ptr %target, align 4
+  %readtmp55 = load i32, ptr %target, align 4
+  %readtmp56 = load ptr, ptr %sb, align 8
+  %23 = getelementptr inbounds %SpriteBatch, ptr %readtmp56, i32 0, i32 3
+  %readtmp57 = load i32, ptr %23, align 4
+  %lttmp58 = icmp ult i32 %readtmp55, %readtmp57
+  %ifcond59 = icmp ne i1 %lttmp58, false
+  br i1 %ifcond59, label %ifbody60, label %ifmerge61
+
+ifmerge51:                                        ; preds = %ifmerge81, %ifmerge
+  %ctx = alloca %SBContext, align 8
+  %entry95 = alloca ptr, align 8
+  %24 = getelementptr inbounds %SBContext, ptr %ctx, i32 0, i32 0
+  store i32 0, ptr %24, align 4
+  %25 = getelementptr inbounds %SBContext, ptr %ctx, i32 0, i32 1
+  store i32 0, ptr %25, align 4
+  %readtmp96 = load ptr, ptr %sb, align 8
+  %26 = getelementptr inbounds %SpriteBatch, ptr %readtmp96, i32 0, i32 1
+  %readtmp97 = load ptr, ptr %26, align 8
+  %27 = getelementptr inbounds %SBQueue, ptr %readtmp97, i32 0, i32 1
+  %readtmp98 = load i32, ptr %27, align 4
+  %eqtmp99 = icmp ne i32 0, %readtmp98
+  %ifcond100 = icmp ne i1 %eqtmp99, false
+  br i1 %ifcond100, label %ifbody101, label %ifmerge102
+
+ifbody60:                                         ; preds = %ifbody50
+  %readtmp62 = load ptr, ptr %sb, align 8
+  %28 = getelementptr inbounds %SpriteBatch, ptr %readtmp62, i32 0, i32 3
+  %readtmp63 = load i32, ptr %28, align 4
+  %readtmp64 = load i32, ptr %target, align 4
+  %subtmp = sub i32 %readtmp63, %readtmp64
+  %readtmp65 = load ptr, ptr %sb, align 8
+  %29 = getelementptr inbounds %SpriteBatch, ptr %readtmp65, i32 0, i32 2
+  %readtmp66 = load ptr, ptr %29, align 8
+  %readtmp67 = load i32, ptr %target, align 4
+  %multmp = mul i32 %readtmp67, ptrtoint (ptr getelementptr inbounds ([1 x i32], ptr null, i32 1) to i32)
+  %calltmp68 = call ptr @mem.add_5(ptr %readtmp66, i32 %multmp)
+  %calltmp69 = call void @glDeleteBuffers(i32 %subtmp, ptr %calltmp68)
+  br label %ifmerge61
+
+ifmerge61:                                        ; preds = %ifbody60, %ifbody50
+  %readtmp70 = load ptr, ptr %sb, align 8
+  %30 = getelementptr inbounds %SpriteBatch, ptr %readtmp70, i32 0, i32 2
+  %readtmp71 = load ptr, ptr %sb, align 8
+  %31 = getelementptr inbounds %SpriteBatch, ptr %readtmp71, i32 0, i32 2
+  %readtmp72 = load ptr, ptr %31, align 8
+  %readtmp73 = load i32, ptr %target, align 4
+  %multmp74 = mul i32 %readtmp73, ptrtoint (ptr getelementptr inbounds ([1 x i32], ptr null, i32 1) to i32)
+  %calltmp75 = call ptr @realloc(ptr %readtmp72, i32 %multmp74)
+  store ptr %calltmp75, ptr %30, align 8
+  %readtmp76 = load i32, ptr %target, align 4
+  %readtmp77 = load ptr, ptr %sb, align 8
+  %32 = getelementptr inbounds %SpriteBatch, ptr %readtmp77, i32 0, i32 3
+  %readtmp78 = load i32, ptr %32, align 4
+  %gttmp = icmp ugt i32 %readtmp76, %readtmp78
+  %ifcond79 = icmp ne i1 %gttmp, false
+  br i1 %ifcond79, label %ifbody80, label %ifmerge81
+
+ifbody80:                                         ; preds = %ifmerge61
+  %readtmp82 = load i32, ptr %target, align 4
+  %readtmp83 = load ptr, ptr %sb, align 8
+  %33 = getelementptr inbounds %SpriteBatch, ptr %readtmp83, i32 0, i32 3
+  %readtmp84 = load i32, ptr %33, align 4
+  %subtmp85 = sub i32 %readtmp82, %readtmp84
+  %readtmp86 = load ptr, ptr %sb, align 8
+  %34 = getelementptr inbounds %SpriteBatch, ptr %readtmp86, i32 0, i32 2
+  %readtmp87 = load ptr, ptr %34, align 8
+  %readtmp88 = load ptr, ptr %sb, align 8
+  %35 = getelementptr inbounds %SpriteBatch, ptr %readtmp88, i32 0, i32 3
+  %readtmp89 = load i32, ptr %35, align 4
+  %multmp90 = mul i32 %readtmp89, ptrtoint (ptr getelementptr inbounds ([1 x i32], ptr null, i32 1) to i32)
+  %calltmp91 = call ptr @mem.add_5(ptr %readtmp87, i32 %multmp90)
+  %calltmp92 = call void @glGenBuffers(i32 %subtmp85, ptr %calltmp91)
+  br label %ifmerge81
+
+ifmerge81:                                        ; preds = %ifbody80, %ifmerge61
+  %readtmp93 = load ptr, ptr %sb, align 8
+  %36 = getelementptr inbounds %SpriteBatch, ptr %readtmp93, i32 0, i32 3
+  %readtmp94 = load i32, ptr %target, align 4
+  store i32 %readtmp94, ptr %36, align 4
+  br label %ifmerge51
+
+ifbody101:                                        ; preds = %ifmerge51
+  store i32 0, ptr %idx, align 4
+  br label %dobody103
+
+ifmerge102:                                       ; preds = %domerge104, %ifmerge51
+  store i32 0, ptr %idx, align 4
+  %readtmp185 = load i32, ptr %idx, align 4
+  %readtmp186 = load ptr, ptr %sb, align 8
+  %37 = getelementptr inbounds %SpriteBatch, ptr %readtmp186, i32 0, i32 0
+  %readtmp187 = load ptr, ptr %37, align 8
+  %38 = getelementptr inbounds %SBQueue, ptr %readtmp187, i32 0, i32 1
+  %readtmp188 = load i32, ptr %38, align 4
+  %lttmp189 = icmp ult i32 %readtmp185, %readtmp188
+  %ifcond190 = icmp ne i1 %lttmp189, false
+  br i1 %ifcond190, label %ifbody191, label %ifmerge192
+
+dobody103:                                        ; preds = %ifmerge158, %ifbody101
+  %readtmp105 = load ptr, ptr %sb, align 8
+  %39 = getelementptr inbounds %SpriteBatch, ptr %readtmp105, i32 0, i32 1
+  %readtmp106 = load ptr, ptr %39, align 8
+  %readtmp107 = load i32, ptr %idx, align 4
+  %calltmp108 = call ptr @SBQueue.getEntry_0(ptr %readtmp106, i32 %readtmp107)
+  store ptr %calltmp108, ptr %entry95, align 8
+  %readtmp109 = load %SBContext, ptr %ctx, align 8
+  %extracted = extractvalue %SBContext %readtmp109, 0
+  %readtmp110 = load ptr, ptr %entry95, align 8
+  %40 = getelementptr inbounds %SBQueueEntry, ptr %readtmp110, i32 0, i32 2
+  %readtmp111 = load ptr, ptr %40, align 8
+  %eqtmp112 = icmp ne ptr %readtmp111, %extracted
+  %ifcond113 = icmp ne i1 %eqtmp112, false
+  br i1 %ifcond113, label %ifbody114, label %ifmerge115
+
+domerge104:                                       ; preds = %ifmerge158
+  br label %ifmerge102
+
+ifbody114:                                        ; preds = %dobody103
+  %readtmp116 = load ptr, ptr %entry95, align 8
+  %41 = getelementptr inbounds %SBQueueEntry, ptr %readtmp116, i32 0, i32 2
+  %readtmp117 = load ptr, ptr %41, align 8
+  %42 = getelementptr inbounds %Texture, ptr %readtmp117, i32 0, i32 0
+  %readtmp118 = load i32, ptr %42, align 4
+  %calltmp119 = call void @glBindTexture(i32 3553, i32 %readtmp118)
+  br label %ifmerge115
+
+ifmerge115:                                       ; preds = %ifbody114, %dobody103
+  %43 = getelementptr inbounds %SBContext, ptr %ctx, i32 0, i32 0
+  %readtmp120 = load ptr, ptr %sb, align 8
+  %44 = getelementptr inbounds %SpriteBatch, ptr %readtmp120, i32 0, i32 1
+  %readtmp121 = load ptr, ptr %44, align 8
+  %readtmp122 = load i32, ptr %idx, align 4
+  %calltmp123 = call ptr @SBQueue.getEntry_0(ptr %readtmp121, i32 %readtmp122)
+  %45 = getelementptr inbounds %SBQueueEntry, ptr %calltmp123, i32 0, i32 2
+  %readtmp124 = load ptr, ptr %45, align 8
+  store ptr %readtmp124, ptr %43, align 8
+  %readtmp125 = load %SBContext, ptr %ctx, align 8
+  %extracted126 = extractvalue %SBContext %readtmp125, 1
+  %readtmp127 = load ptr, ptr %entry95, align 8
+  %46 = getelementptr inbounds %SBQueueEntry, ptr %readtmp127, i32 0, i32 3
+  %readtmp128 = load ptr, ptr %46, align 8
+  %eqtmp129 = icmp ne ptr %readtmp128, %extracted126
+  %ifcond130 = icmp ne i1 %eqtmp129, false
+  br i1 %ifcond130, label %ifbody131, label %ifmerge132
+
+ifbody131:                                        ; preds = %ifmerge115
+  %readtmp133 = load ptr, ptr %entry95, align 8
+  %47 = getelementptr inbounds %SBQueueEntry, ptr %readtmp133, i32 0, i32 3
+  %readtmp134 = load ptr, ptr %47, align 8
+  %48 = getelementptr inbounds %Shader, ptr %readtmp134, i32 0, i32 0
+  %readtmp135 = load i32, ptr %48, align 4
+  %calltmp136 = call void @glUseProgram(i32 %readtmp135)
+  br label %ifmerge132
+
+ifmerge132:                                       ; preds = %ifbody131, %ifmerge115
+  %49 = getelementptr inbounds %SBContext, ptr %ctx, i32 0, i32 1
+  %readtmp137 = load ptr, ptr %sb, align 8
+  %50 = getelementptr inbounds %SpriteBatch, ptr %readtmp137, i32 0, i32 1
+  %readtmp138 = load ptr, ptr %50, align 8
+  %readtmp139 = load i32, ptr %idx, align 4
+  %calltmp140 = call ptr @SBQueue.getEntry_0(ptr %readtmp138, i32 %readtmp139)
+  %51 = getelementptr inbounds %SBQueueEntry, ptr %calltmp140, i32 0, i32 3
+  %readtmp141 = load ptr, ptr %51, align 8
+  store ptr %readtmp141, ptr %49, align 8
+  %readtmp142 = load ptr, ptr %sb, align 8
+  %52 = getelementptr inbounds %SpriteBatch, ptr %readtmp142, i32 0, i32 2
+  %readtmp143 = load ptr, ptr %52, align 8
+  %readtmp144 = load i32, ptr %idx, align 4
+  %multmp145 = mul i32 %readtmp144, ptrtoint (ptr getelementptr inbounds ([1 x i32], ptr null, i32 1) to i32)
+  %calltmp146 = call ptr @mem.add_5(ptr %readtmp143, i32 %multmp145)
+  %readtmp147 = load i32, ptr %calltmp146, align 4
+  %calltmp148 = call void @glBindBuffer(i32 34962, i32 %readtmp147)
+  %readtmp149 = load ptr, ptr %entry95, align 8
+  %53 = getelementptr inbounds %SBQueueEntry, ptr %readtmp149, i32 0, i32 0
+  %readtmp150 = load i1, ptr %53, align 1
+  %readtmp151 = load ptr, ptr %entry95, align 8
+  %54 = getelementptr inbounds %SBQueueEntry, ptr %readtmp151, i32 0, i32 4
+  %readtmp152 = load ptr, ptr %54, align 8
+  %55 = getelementptr inbounds %Verts, ptr %readtmp152, i32 0, i32 1
+  %readtmp153 = load i32, ptr %55, align 4
+  %eqtmp154 = icmp ne i32 0, %readtmp153
+  %subtmp155 = and i1 %readtmp150, %eqtmp154
+  %ifcond156 = icmp ne i1 %subtmp155, false
+  br i1 %ifcond156, label %ifbody157, label %ifmerge158
+
+ifbody157:                                        ; preds = %ifmerge132
+  %readtmp159 = load ptr, ptr %entry95, align 8
+  %56 = getelementptr inbounds %SBQueueEntry, ptr %readtmp159, i32 0, i32 4
+  %readtmp160 = load ptr, ptr %56, align 8
+  %57 = getelementptr inbounds %Verts, ptr %readtmp160, i32 0, i32 1
+  %readtmp161 = load i32, ptr %57, align 4
+  %multmp162 = mul i32 %readtmp161, ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32)
+  %readtmp163 = load ptr, ptr %entry95, align 8
+  %58 = getelementptr inbounds %SBQueueEntry, ptr %readtmp163, i32 0, i32 4
+  %readtmp164 = load ptr, ptr %58, align 8
+  %59 = getelementptr inbounds %Verts, ptr %readtmp164, i32 0, i32 0
+  %readtmp165 = load ptr, ptr %59, align 8
+  %calltmp166 = call void @glBufferData(i32 34962, i32 %multmp162, ptr %readtmp165, i32 35048)
+  br label %ifmerge158
+
+ifmerge158:                                       ; preds = %ifbody157, %ifmerge132
+  %calltmp167 = call void @glVertexAttribPointer(i32 0, i32 3, i32 5126, i32 0, i32 ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32), i32 0)
+  %calltmp168 = call void @glVertexAttribPointer(i32 1, i32 2, i32 5126, i32 0, i32 ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32), i32 mul (i32 ptrtoint (ptr getelementptr inbounds ([1 x float], ptr null, i32 1) to i32), i32 3))
+  %calltmp169 = call void @glVertexAttribPointer(i32 2, i32 4, i32 5126, i32 0, i32 ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32), i32 mul (i32 ptrtoint (ptr getelementptr inbounds ([1 x float], ptr null, i32 1) to i32), i32 5))
+  %calltmp170 = call void @glEnableVertexAttribArray(i32 0)
+  %calltmp171 = call void @glEnableVertexAttribArray(i32 1)
+  %calltmp172 = call void @glEnableVertexAttribArray(i32 2)
+  %readtmp173 = load ptr, ptr %entry95, align 8
+  %60 = getelementptr inbounds %SBQueueEntry, ptr %readtmp173, i32 0, i32 4
+  %readtmp174 = load ptr, ptr %60, align 8
+  %61 = getelementptr inbounds %Verts, ptr %readtmp174, i32 0, i32 1
+  %readtmp175 = load i32, ptr %61, align 4
+  %calltmp176 = call void @glDrawArrays(i32 4, i32 0, i32 %readtmp175)
+  %readtmp177 = load i32, ptr %idx, align 4
+  %addtmp178 = add i32 %readtmp177, 1
+  store i32 %addtmp178, ptr %idx, align 4
+  %readtmp179 = load i32, ptr %idx, align 4
+  %readtmp180 = load ptr, ptr %sb, align 8
+  %62 = getelementptr inbounds %SpriteBatch, ptr %readtmp180, i32 0, i32 1
+  %readtmp181 = load ptr, ptr %62, align 8
+  %63 = getelementptr inbounds %SBQueue, ptr %readtmp181, i32 0, i32 1
+  %readtmp182 = load i32, ptr %63, align 4
+  %lttmp183 = icmp ult i32 %readtmp179, %readtmp182
+  %docond184 = icmp ne i1 %lttmp183, false
+  br i1 %docond184, label %dobody103, label %domerge104
+
+ifbody191:                                        ; preds = %ifmerge102
+  br label %dobody193
+
+ifmerge192:                                       ; preds = %domerge194, %ifmerge102
+  %readtmp211 = load ptr, ptr %sb, align 8
+  %64 = getelementptr inbounds %SpriteBatch, ptr %readtmp211, i32 0, i32 0
+  %readtmp212 = load ptr, ptr %64, align 8
+  %65 = getelementptr inbounds %SBQueue, ptr %readtmp212, i32 0, i32 0
+  %readtmp213 = load ptr, ptr %65, align 8
+  %calltmp214 = call void @free(ptr %readtmp213)
+  %readtmp215 = load ptr, ptr %sb, align 8
+  %66 = getelementptr inbounds %SpriteBatch, ptr %readtmp215, i32 0, i32 0
+  %readtmp216 = load ptr, ptr %66, align 8
+  %calltmp217 = call void @free(ptr %readtmp216)
+  %readtmp218 = load ptr, ptr %sb, align 8
+  %67 = getelementptr inbounds %SpriteBatch, ptr %readtmp218, i32 0, i32 0
+  %readtmp219 = load ptr, ptr %sb, align 8
+  %68 = getelementptr inbounds %SpriteBatch, ptr %readtmp219, i32 0, i32 1
+  %readtmp220 = load ptr, ptr %68, align 8
+  store ptr %readtmp220, ptr %67, align 8
+  %readtmp221 = load ptr, ptr %sb, align 8
+  %69 = getelementptr inbounds %SpriteBatch, ptr %readtmp221, i32 0, i32 1
+  %calltmp222 = call ptr @malloc(i32 ptrtoint (ptr getelementptr inbounds ([1 x %SBQueue], ptr null, i32 1) to i32))
+  store ptr %calltmp222, ptr %69, align 8
+  %readtmp223 = load ptr, ptr %sb, align 8
+  %70 = getelementptr inbounds %SpriteBatch, ptr %readtmp223, i32 0, i32 1
+  %readtmp224 = load ptr, ptr %70, align 8
+  %71 = getelementptr inbounds %SBQueue, ptr %readtmp224, i32 0, i32 0
+  store i32 0, ptr %71, align 4
+  %readtmp225 = load ptr, ptr %sb, align 8
+  %72 = getelementptr inbounds %SpriteBatch, ptr %readtmp225, i32 0, i32 1
+  %readtmp226 = load ptr, ptr %72, align 8
+  %73 = getelementptr inbounds %SBQueue, ptr %readtmp226, i32 0, i32 1
+  store i32 0, ptr %73, align 4
+  ret void
+
+dobody193:                                        ; preds = %dobody193, %ifbody191
+  %readtmp195 = load ptr, ptr %sb, align 8
+  %74 = getelementptr inbounds %SpriteBatch, ptr %readtmp195, i32 0, i32 0
+  %readtmp196 = load ptr, ptr %74, align 8
+  %readtmp197 = load i32, ptr %idx, align 4
+  %calltmp198 = call ptr @SBQueue.getEntry_0(ptr %readtmp196, i32 %readtmp197)
+  store ptr %calltmp198, ptr %entry95, align 8
+  %readtmp199 = load ptr, ptr %entry95, align 8
+  %75 = getelementptr inbounds %SBQueueEntry, ptr %readtmp199, i32 0, i32 4
+  %readtmp200 = load ptr, ptr %75, align 8
+  %76 = getelementptr inbounds %Verts, ptr %readtmp200, i32 0, i32 0
+  %readtmp201 = load ptr, ptr %76, align 8
+  %calltmp202 = call void @free(ptr %readtmp201)
+  %readtmp203 = load i32, ptr %idx, align 4
+  %addtmp204 = add i32 %readtmp203, 1
+  store i32 %addtmp204, ptr %idx, align 4
+  %readtmp205 = load i32, ptr %idx, align 4
+  %readtmp206 = load ptr, ptr %sb, align 8
+  %77 = getelementptr inbounds %SpriteBatch, ptr %readtmp206, i32 0, i32 0
+  %readtmp207 = load ptr, ptr %77, align 8
+  %78 = getelementptr inbounds %SBQueue, ptr %readtmp207, i32 0, i32 1
+  %readtmp208 = load i32, ptr %78, align 4
+  %lttmp209 = icmp ult i32 %readtmp205, %readtmp208
+  %docond210 = icmp ne i1 %lttmp209, false
+  br i1 %docond210, label %dobody193, label %domerge194
+
+domerge194:                                       ; preds = %dobody193
+  br label %ifmerge192
+}
+
+define i32 @SBQueueEntry.getHash_0(ptr %0) {
+entry:
+  %entry1 = alloca ptr, align 8
+  store ptr %0, ptr %entry1, align 8
+  %readtmp = load ptr, ptr %entry1, align 8
+  %1 = getelementptr inbounds %SBQueueEntry, ptr %readtmp, i32 0, i32 2
+  %readtmp2 = load ptr, ptr %1, align 8
+  %readtmp3 = load ptr, ptr %entry1, align 8
+  %2 = getelementptr inbounds %SBQueueEntry, ptr %readtmp3, i32 0, i32 4
+  %readtmp4 = load ptr, ptr %2, align 8
+  %calltmp = call i32 @Verts.getHash_0(ptr %readtmp4)
+  %addtmp = add ptr %readtmp2, i32 %calltmp
+  ret ptr %addtmp
+}
+
+define i32 @Verts.getHash_0(ptr %0) {
+entry:
+  %verts = alloca ptr, align 8
+  store ptr %0, ptr %verts, align 8
+  %readtmp = load ptr, ptr %verts, align 8
+  %1 = getelementptr inbounds %Verts, ptr %readtmp, i32 0, i32 0
+  %readtmp1 = load ptr, ptr %1, align 8
+  %readtmp2 = load ptr, ptr %verts, align 8
+  %2 = getelementptr inbounds %Verts, ptr %readtmp2, i32 0, i32 1
+  %readtmp3 = load i32, ptr %2, align 4
+  %multmp = mul i32 %readtmp3, ptrtoint (ptr getelementptr inbounds ([1 x %Vert], ptr null, i32 1) to i32)
+  %calltmp = call i32 @Hash.get_0(ptr %readtmp1, i32 %multmp)
+  ret i32 %calltmp
+}
+
+define i32 @Hash.get_0(ptr %0, i32 %1) {
+entry:
+  %result = alloca i32, align 4
+  %idx = alloca i32, align 4
+  %str = alloca ptr, align 8
+  %c = alloca i32, align 4
+  %neqtmp = icmp eq i32 0, %1
+  %ifcond = icmp ne i1 %neqtmp, false
+  br i1 %ifcond, label %ifbody, label %ifmerge
+
+ifbody:                                           ; preds = %entry
+  ret i32 0
+  br label %ifmerge
+
+ifmerge:                                          ; preds = %ifbody, %entry
+  store i32 %1, ptr %idx, align 4
+  store ptr %0, ptr %str, align 8
+  store i32 5381, ptr %result, align 4
+  br label %dobody
+
+dobody:                                           ; preds = %dobody, %ifmerge
+  %readtmp = load ptr, ptr %str, align 8
+  %readtmp1 = load i32, ptr %idx, align 4
+  %calltmp = call ptr @mem.add_4(ptr %readtmp, i32 %readtmp1)
+  %readtmp2 = load i8, ptr %calltmp, align 1
+  store i8 %readtmp2, ptr %c, align 1
+  %readtmp3 = load i32, ptr %result, align 4
+  %subtmp = shl i32 %readtmp3, 5
+  %readtmp4 = load i32, ptr %result, align 4
+  %addtmp = add i32 %subtmp, %readtmp4
+  %readtmp5 = load i32, ptr %c, align 4
+  %addtmp6 = add i32 %addtmp, %readtmp5
+  store i32 %addtmp6, ptr %result, align 4
+  %readtmp7 = load i32, ptr %idx, align 4
+  %subtmp8 = sub i32 %readtmp7, 1
+  store i32 %subtmp8, ptr %idx, align 4
+  %readtmp9 = load i32, ptr %idx, align 4
+  %gttmp = icmp ugt i32 %readtmp9, 0
+  %docond = icmp ne i1 %gttmp, false
+  br i1 %docond, label %dobody, label %domerge
+
+domerge:                                          ; preds = %dobody
+  %readtmp10 = load i32, ptr %result, align 4
+  ret i32 %readtmp10
+}
+
+define ptr @mem.add_4(ptr %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, ptr %0
+  ret i32 %addtmp
+}
+
+define ptr @mem.add_5(ptr %0, i32 %1) {
+entry:
+  %addtmp = add i32 %1, ptr %0
+  ret i32 %addtmp
+}
+
+define void @GFXContext.swap_0(ptr %0) {
+entry:
+  %1 = getelementptr inbounds %GFXContext, ptr %0, i32 0, i32 0
+  %readtmp = load ptr, ptr %1, align 8
+  %calltmp = call void @glfwSwapBuffers(ptr %readtmp)
+  ret void
+}
+
+define i1 @GFXContext.poll_0(ptr %0) {
+entry:
+  %calltmp = call void @glfwPollEvents()
+  %1 = getelementptr inbounds %GFXContext, ptr %0, i32 0, i32 0
+  %readtmp = load ptr, ptr %1, align 8
+  %calltmp1 = call i1 @glfwWindowShouldClose(ptr %readtmp)
+  %nottmp = xor i1 %calltmp1, true
+  ret i1 %nottmp
+}

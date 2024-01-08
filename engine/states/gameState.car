@@ -40,19 +40,19 @@ struct GameState {
   }
 
   def proc update GameState* f32 f32 : void {
-    f32 dt
-    f32 t
+    f32 adt
+    f32 at
     GameState* state
 
-    dt swap =
-    t swap =
+    adt swap =
+    at swap =
     state swap =
 
     # friction
     state@.vel state@.vel@ 0.9 Vec2.mul =
 
     # input
-    state@.vel state@.vel@ Input.instance@.dir 2000.0 dt@ * Vec2.mul Vec2.add =
+    state@.vel state@.vel@ Input.instance@.dir 2000.0 adt@ * Vec2.mul Vec2.add =
 
     Input.instance.shoot@ if {
       state@.bullets true state@.playersprite.pos@ 32.0 16.0 Vec2.new Vec2.add
@@ -60,27 +60,27 @@ struct GameState {
     }
 
     # actual update
-    state@.playersprite.pos.y state@.playersprite.pos.y@ dt@ state@.vel.y@ * + =
-    state@.playersprite.pos.x state@.playersprite.pos.x@ dt@ state@.vel.x@ * + =
+    state@.playersprite.pos.y state@.playersprite.pos.y@ adt@ state@.vel.y@ * + =
+    state@.playersprite.pos.x state@.playersprite.pos.x@ adt@ state@.vel.x@ * + =
 
-    state@.bullets t@ dt@ BulletManager.update
+    state@.bullets at@ adt@ BulletManager.update
     state@.stars Stars.update
   }
 
-  def proc lerp GameState* GameState GameState f32 : void {
+  def proc lerp GameState* GameState* GameState* f32 : void {
     GameState result
     GameState a
     GameState b
     f32 pc
 
     pc swap =
-    a swap =
-    b covr =
-    result swap =
+    a swap@ =
+    b covr@ =
+    result swap@ =
 
     result.playersprite a@.playersprite b@.playersprite pc@ MultiSprite.lerp
     result.bullets a@.bullets b@.bullets pc@ BulletManager.lerp
-    result.stars a@.stars b@.stars pc@ Stars.lerp
+    result.stars a.stars b.stars pc@ Stars.lerp
 
     result@ =
   }

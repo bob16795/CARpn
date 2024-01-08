@@ -1,0 +1,65 @@
+extern proc printint i64 : void
+
+const SUCCESS 0
+
+struct Integer {
+    u64 value
+
+    def proc free Integer* : void {
+        disc
+    }
+}
+
+struct RefInRef {
+    Ref* tmp
+
+    def proc new : RefInRef {
+        RefInRef result
+
+        result.tmp 1000 i64' Ref.new =
+
+        result@
+    }
+
+    def proc free RefInRef* : void {
+        copy.tmp null Ref.`=`
+        disc
+    }
+}
+
+def proc main : i32 {
+    Ref* tmp
+    Ref* obj
+
+    # create a new ref to a i64
+    obj 1000 i64' Ref.new =
+
+    # print the value in the new ref
+    obj@.data@ i64*' @ printint
+
+    # store 100 into ref
+    obj@.data@ i64*' 100 =
+
+    # copy the ref to tmp
+    tmp obj@ Ref.`=`
+
+    # destroy the first ref
+    obj null Ref.`=`
+
+    # print the value in the new ref
+    tmp@.data@ i64*' @ printint
+
+    # destroy the 2nd ref
+    tmp null Ref.`=`
+
+    # create a ref in ref
+    tmp RefInRef.new Ref.new =
+
+    tmp@.data@ RefInRef*' RefInRef.free
+
+    tmp null Ref.`=`
+
+    # if all goes well, auto free
+
+    SUCCESS
+}

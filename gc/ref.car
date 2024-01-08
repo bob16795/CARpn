@@ -1,0 +1,68 @@
+extern proc printint i64 : void
+
+fntype proc freeRef void* : void
+
+struct Ref {
+    u64* rc
+    void* data
+    freeRef* freeFn
+
+    def proc new anytype : Ref* {
+        Ref* result
+
+        result Ref.SIZE i64' malloc =
+
+        result@.rc i64.SIZE u64' malloc u64*' =
+        result@.data covr.TYPE.SIZE u64' malloc =
+
+        result@.rc@ 1 =
+        result@.data@ covr.TYPE*' swap =
+
+        result@
+    }
+
+    def proc addRef Ref* : void {
+        Ref* ref
+
+        ref swap =
+
+        ref@ null != if {
+            ref@.rc@
+            copy@ 1 + =
+        }
+    }
+
+    def proc deleteRef Ref* : void {
+        Ref* ref
+
+        ref swap =
+
+        ref@ null != if {
+            ref@.rc@
+            copy@ 1 - =
+
+            ref@.rc@@ 0 == if {
+                ref@.rc@ free
+                ref@.data@ free
+                ref@ free
+            }
+        }
+    }
+
+    def proc unstack Ref* : void {
+        Ref.deleteRef
+    }
+
+    def proc `=` Ref** Ref* : void {
+        Ref** src
+        Ref* dst
+
+        dst swap =
+        src swap =
+
+        dst@ Ref.addRef
+        src@@ Ref.deleteRef
+
+        src@ dst@ =
+    }
+}

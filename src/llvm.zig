@@ -6,14 +6,6 @@ pub const Bool = enum(c_int) {
     False,
     True,
     _,
-
-    pub fn fromBool(b: bool) Bool {
-        return @intToEnum(Bool, @boolToInt(b));
-    }
-
-    pub fn toBool(b: Bool) bool {
-        return b != .False;
-    }
 };
 pub const AttributeIndex = c_uint;
 

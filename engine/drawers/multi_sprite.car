@@ -15,8 +15,8 @@ struct MultiSprite {
 
     Verts* v
 
-    v Verts.SIZE i64' malloc =
-    v@.verts Vert.SIZE i64' 6 calloc =
+    v Verts.SIZE i32' malloc =
+    v@.verts Vert.SIZE i32' 6 calloc =
     v@.len 6 =
 
     Rect uv

@@ -1,9 +1,9 @@
 struct Hash {
-  def proc get u8$* i32 : i64 {
-    i64 result
+  def proc get u8$* i32 : i32 {
+    i32 result
     i32 idx
     u8$* str
-    i64 c
+    i32 c
 
     copy 0 == if {
       0 ret
@@ -14,7 +14,7 @@ struct Hash {
     result 5381 =
 
     do {
-      c str@ idx@ u64' mem.add u8*' @ i64' =
+      c str@ idx@ u32' mem.add u8*' @ i32' =
 
       result result@ 5 << result@ + c@ + =
 

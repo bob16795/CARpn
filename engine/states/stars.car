@@ -24,7 +24,7 @@ struct Stars {
     do {
       Star* current
 
-      current self@.stars idx@ Star.SIZE * i64' mem.add =
+      current self@.stars idx@ Star.SIZE * i32' mem.add =
       current@.pos.y copy@ current@.spd@ 4.0 * + =
 
       current@.pos.y@ 480.0 > if {
@@ -45,8 +45,8 @@ struct Stars {
 
     self swap =
 
-    toDraw Verts.SIZE i64' malloc =
-    toDraw@.verts Vert.SIZE i64' 600 calloc =
+    toDraw Verts.SIZE i32' malloc =
+    toDraw@.verts Vert.SIZE i32' 600 calloc =
     toDraw@.len 600 =
 
     i32 idx
@@ -55,8 +55,8 @@ struct Stars {
       Vert [6] * editing
       Star* current
 
-      editing toDraw@.verts@ idx@ Vert.SIZE 6 * * i64' mem.add =
-      current self@.stars idx@ Star.SIZE * i64' mem.add =
+      editing toDraw@.verts@ idx@ Vert.SIZE 6 * * i32' mem.add =
+      current self@.stars idx@ Star.SIZE * i32' mem.add =
 
       editing@ [0] .x current@.pos.x@ 3.0 + =
       editing@ [0] .y current@.pos.y@ current@.spd@ 3.0 * + =
@@ -103,26 +103,26 @@ struct Stars {
     toDraw@
   }
 
-  def proc lerp Stars* Stars Stars f32 : void {
+  def proc lerp Stars* Stars* Stars* f32 : void {
     Stars result
     Stars a
     Stars b
     f32 pc
 
     pc swap =
-    a swap =
-    b covr =
-    result swap =
+    a swap@ =
+    b covr@ =
+    result swap@ =
 
     i32 idx
     idx 0 =
     do {
       Star* currenta
-      currenta a.stars idx@ Star.SIZE * i64' mem.add =
+      currenta a.stars idx@ Star.SIZE * i32' mem.add =
       Star* currentb
-      currentb b.stars idx@ Star.SIZE * i64' mem.add =
+      currentb b.stars idx@ Star.SIZE * i32' mem.add =
       Star* curres
-      curres result.stars idx@ Star.SIZE * i64' mem.add =
+      curres result.stars idx@ Star.SIZE * i32' mem.add =
 
       currenta@.tp@ currentb@.tp@ == if {
         curres@.pos currenta@.pos@ currentb@.pos@ pc@ Vec2.lerp =
@@ -139,17 +139,17 @@ struct Stars {
     Stars result
 
     result.shd swap =
-    result.tex Texture.SIZE i64' malloc =
+    result.tex Texture.SIZE i32' malloc =
 
     setuprand
 
     i32 idx
     idx 0 =
     do {
-      result.stars idx@ Star.SIZE * i64' mem.add Star*' .pos randf 640.0 * randf 480.0 * Vec2.new =
-      result.stars idx@ Star.SIZE * i64' mem.add Star*' .spd randf 10.0 * 3.0 + =
+      result.stars idx@ Star.SIZE * i32' mem.add Star*' .pos randf 640.0 * randf 480.0 * Vec2.new =
+      result.stars idx@ Star.SIZE * i32' mem.add Star*' .spd randf 10.0 * 3.0 + =
 
-      result.stars idx@ Star.SIZE * i64' mem.add Star*' .c
+      result.stars idx@ Star.SIZE * i32' mem.add Star*' .c
       0.6 0.7 0.0 1.0 Color.new
       1.0 0.0 0.0 1.0 Color.new
       randf Color.mix

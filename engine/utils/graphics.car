@@ -1,7 +1,11 @@
 struct Win {}
+
 fntype proc glfwKeyCallback Win* i32 i32 i32 i32 : void
+fntype proc glfwWindowSizeCallback Win* i32 i32 : void
 
 # glfw externs
+extern proc emscripten_sleep i32 : void
+extern proc printline u8$* : void
 extern proc glfwInit : bool
 extern proc glfwCreateWindow i32 i32 u8$* void* void* : Win*
 extern proc glfwTerminate : void
@@ -13,6 +17,7 @@ extern proc glfwGetFramebufferSize Win* i32* i32* : void
 extern proc glfwGetTime : f32
 extern proc glfwSwapInterval i32 : void
 extern proc glfwSetKeyCallback Win* glfwKeyCallback : void
+extern proc glfwSetWindowSizeCallback Win* glfwWindowSizeCallback : void
 
 extern proc glClearColor f32 f32 f32 f32 : void
 extern proc glClear u32 : void
@@ -46,27 +51,41 @@ struct GFXContext {
   Color bg
   IVec2 size
 
+  def proc resizeCallback Win* i32 i32 : void {
+    i32 width
+    i32 height
+    Win* window
+
+    height swap =
+    width swap =
+    window swap =
+  }
+
   def proc init : GFXContext* {
     GFXContext* result
 
-    result GFXContext.SIZE i64' malloc =
+    result GFXContext.SIZE i32' malloc =
 
     glfwInit! if {
-        "Could not init glfw" printf
+        "Could not init glfw" printline
         1 exit
     }
   
     result@.win 640 480 "CARpn Test" null null glfwCreateWindow =
 
     result@.win@ glfwMakeContextCurrent
-    1 glfwSwapInterval
+    # 1 glfwSwapInterval
 
     result@.win@ result@.size.x result@.size.y glfwGetFramebufferSize
+
+    result@.win@ (GFXContext.resizeCallback) glfwSetWindowSizeCallback
 
     result@.bg.r 0.0 =
     result@.bg.g 0.0 =
     result@.bg.b 0.05 =
     result@.bg.a 1.0 =
+
+    "init gfx" printline
 
     result@
   }

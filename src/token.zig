@@ -21,6 +21,7 @@ pub const Token = struct {
         Error,
         Global,
         Func,
+        Const,
     };
 
     type: Type,

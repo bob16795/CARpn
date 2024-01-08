@@ -1,19 +1,20 @@
 def proc getTexShaders : ShaderFile$* {
   ShaderFile$* result
 
-  result ShaderFile.SIZE i64' 2 calloc =
+  result ShaderFile.SIZE i32' 2 calloc =
 
-  result@[0].contents u8$*$*.SIZE i64' 1 calloc =
+  result@[0].contents u8$*$*.SIZE i32' 1 calloc =
   result@[0].kind 35633 =
   result@[0].count 1 =
   result@[0].contents@ u8$**'
-  "#version 330 core
-layout (location = 0) in vec3 aVertex;
-layout (location = 1) in vec2 aTexCoords;
-layout (location = 2) in vec4 aColor;
+  "
+precision highp float;
+attribute vec3 aVertex;
+attribute vec2 aTexCoords;
+attribute vec4 aColor;
 uniform mat4 projection;
-out vec2 texCoords;
-out vec4 tintColor;
+varying vec2 texCoords;
+varying vec4 tintColor;
 void main()
 {
     gl_Position = projection * vec4(aVertex.xyz, 1.0);
@@ -21,21 +22,20 @@ void main()
     tintColor = aColor;
 }" =
 
-  result@[1].contents u8$*$*.SIZE i64' 1 calloc =
+  result@[1].contents u8$*$*.SIZE i32' 1 calloc =
   result@[1].kind 35632 =
   result@[1].count 1 =
   result@[1].contents@ u8$**'
-  "#version 330 core
+  "
+precision highp float;
 
-in vec2 texCoords;
-in vec4 tintColor;
-
-out vec4 color;
+varying vec2 texCoords;
+varying vec4 tintColor;
 
 uniform sampler2D tex;
 
 void main() {
-  color = texture(tex, texCoords);
+  gl_FragColor = texture2D(tex, texCoords);
 }" =
 
   result@
@@ -44,19 +44,20 @@ void main() {
 def proc getPixShaders : ShaderFile$* {
   ShaderFile$* result
 
-  result ShaderFile.SIZE i64' 2 calloc =
+  result ShaderFile.SIZE i32' 2 calloc =
 
-  result@[0].contents u8$*$*.SIZE i64' 1 calloc =
+  result@[0].contents u8$*$*.SIZE i32' 1 calloc =
   result@[0].kind 35633 =
   result@[0].count 1 =
   result@[0].contents@ u8$**'
-  "#version 330 core
-layout (location = 0) in vec3 aVertex;
-layout (location = 1) in vec2 aTexCoords;
-layout (location = 2) in vec4 aColor;
+  "
+precision highp float;
+attribute vec3 aVertex;
+attribute vec2 aTexCoords;
+attribute vec4 aColor;
 uniform mat4 projection;
-out vec2 texCoords;
-out vec4 tintColor;
+varying vec2 texCoords;
+varying vec4 tintColor;
 void main()
 {
     gl_Position = projection * vec4(aVertex.xyz, 1.0);
@@ -64,35 +65,43 @@ void main()
     tintColor = aColor;
 }" =
 
-  result@[1].contents u8$*$*.SIZE i64' 1 calloc =
+  result@[1].contents u8$*$*.SIZE i32' 1 calloc =
   result@[1].kind 35632 =
   result@[1].count 1 =
   result@[1].contents@ u8$**'
-  "#version 330 core
+  "
+precision highp float;
 
-in vec2 texCoords;
-in vec4 tintColor;
-
-out vec4 color;
+varying vec2 texCoords;
+varying vec4 tintColor;
 
 uniform sampler2D tex;
 
 void main() {
-     color = tintColor;
+     gl_FragColor = tintColor;
 }" =
 
   result@
 }
 
 extern proc getTimeFloat : f32
+fntype proc loopfn : void
+extern proc emscripten_set_main_loop loopfn : void
+
+global gt f32
+global gdt f32
+global gcurrentTime f32
+global gaccumulator f32
+global gcurrState GameState
+global gprevState GameState
+global gsb SpriteBatch
+global gctx GFXContext*
 
 def proc main : i32 {
-  SpriteBatch sb
-  GFXContext* ctx
   Shader* [2] shd
 
-  ctx GFXContext.init =
-  ctx@ Input.init
+  gctx GFXContext.init =
+  gctx@ Input.init
 
   shd [0] getTexShaders 2 Shader.new =
   shd [1] getPixShaders 2 Shader.new =
@@ -100,76 +109,74 @@ def proc main : i32 {
   shd [0] @ Shader*' 640.0 480.0 Vec2.new Shader.setSize
   shd [1] @ Shader*' 640.0 480.0 Vec2.new Shader.setSize
 
-  sb SpriteBatch.init
+  gsb SpriteBatch.init
 
   # start game loop
 
-  f32 t
-  f32 dt
-  f32 currentTime
-  f32 accumulator
+  gt 0.0 =
+  gdt 0.03 =
 
-  t 0.0 =
-  dt 0.03 =
+  gcurrentTime getTimeFloat =
+  gaccumulator 0.0 =
 
-  currentTime getTimeFloat =
-  accumulator 0.0 =
+  gcurrState shd@ GameState.init =
+  gprevState gcurrState@ =
 
-  GameState currState
-  GameState prevState
+  "init" printline
 
-  currState shd@ GameState.init =
-  prevState currState@ =
+  # 3089 glEnable
 
-  3089 glEnable
+  (loop) emscripten_set_main_loop
 
-  do {
-    # update
-    f32 newTime
-    f32 frameTime
-    
-    newTime getTimeFloat =
-    frameTime newTime@ currentTime@ - =
-
-    frameTime@ 0.25 > if {
-      frameTime 0.25 =
-    }
-
-    currentTime newTime@ =
-    accumulator accumulator@ frameTime@ + =
-
-    # update loop
-    accumulator@ dt@ < ! if {
-      do {
-        prevState@ GameState.free
-        prevState currState@ GameState.copy =
-        currState t@ dt@ GameState.update
-
-        t t@ dt@ + =
-        accumulator accumulator@ dt@ - =
-
-        accumulator@ dt@ < !
-      }
-    }
-
-    # draw
-    GameState state
-    f32 alpha
-
-    alpha accumulator@ dt@ / =
-
-    state prevState@ currState@ alpha@ GameState.lerp
-
-    state sb GameState.draw
-
-    ctx@ GFXContext.clear
-    sb SpriteBatch.finish
-    ctx@ GFXContext.swap
-    ctx@ GFXContext.poll
-  }
-
-  sb SpriteBatch.deinit
-  ctx@ GFXContext.free
+  # gsb SpriteBatch.deinit
+  # gctx@ GFXContext.free
 
   0
+}
+
+def proc loop : void {
+  # update
+  f32 newTime
+  f32 frameTime
+  
+  newTime getTimeFloat =
+  frameTime newTime@ gcurrentTime@ - =
+
+  frameTime@ 0.25 > if {
+    frameTime 0.25 =
+  }
+
+  gcurrentTime newTime@ =
+  gaccumulator gaccumulator@ frameTime@ + =
+
+  # update loop
+  gaccumulator@ gdt@ < ! if {
+    do {
+      gprevState@ GameState.free
+      gprevState gcurrState@ GameState.copy =
+      gcurrState gt@ gdt@ GameState.update
+
+      gt gt@ gdt@ + =
+      gaccumulator gaccumulator@ gdt@ - =
+
+      gaccumulator@ gdt@ < !
+    }
+  }
+
+  # draw
+  GameState state
+  f32 alpha
+
+  alpha gaccumulator@ gdt@ / =
+
+  state gprevState gcurrState alpha@ GameState.lerp
+
+  state gsb GameState.draw
+
+  gctx@ GFXContext.clear
+  gsb SpriteBatch.finish
+  gctx@ GFXContext.swap
+  gctx@ GFXContext.poll
+
+  disc
 }

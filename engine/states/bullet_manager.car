@@ -82,14 +82,14 @@ struct BulletManager {
 
     self@.bullets
     self@.bullets@
-    idx@ 1 + Bullet.SIZE * i64'
+    idx@ 1 + Bullet.SIZE * i32'
     realloc =
 
     self@.bulletCount idx@ 1 + =
 
     Bullet* added
 
-    added self@.bullets@ idx@ Bullet.SIZE * i64' mem.add =
+    added self@.bullets@ idx@ Bullet.SIZE * i32' mem.add =
 
     added@.friendly swap =
     added@.sprite.size.x 16.0 =
@@ -114,7 +114,7 @@ struct BulletManager {
     idx 0 =
     idx@ self@.bulletCount@ < if {
       do {
-        self@.bullets@ idx@ Bullet.SIZE * i64' mem.add t@ dt@ Bullet.update
+        self@.bullets@ idx@ Bullet.SIZE * i32' mem.add t@ dt@ Bullet.update
 
         idx idx@ 1 + =
         idx@ self@.bulletCount@ <
@@ -133,7 +133,7 @@ struct BulletManager {
     idx 0 =
     idx@ self@.bulletCount@ < if {
       do {
-        self@.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'@ sb@ self@.tex@ self@.shd@ Bullet.draw
+        self@.bullets@ idx@ Bullet.SIZE * i32' mem.add Bullet*'@ sb@ self@.tex@ self@.shd@ Bullet.draw
 
         idx idx@ 1 + =
         idx@ self@.bulletCount@ <
@@ -148,14 +148,14 @@ struct BulletManager {
     input swap =
 
     result.bulletCount input.bulletCount@ =
-    result.bullets input.bulletCount@ Bullet.SIZE * i64' malloc =
+    result.bullets input.bulletCount@ Bullet.SIZE * i32' malloc =
     result.shd input.shd@ =
     result.tex input.tex@ =
 
     result.bullets@
     input.bullets@
-    input.bulletCount@ Bullet.SIZE * i64'
-    memcpy
+    input.bulletCount@ Bullet.SIZE * i32'
+    memcpy disc
 
     result@
   }
@@ -175,9 +175,9 @@ struct BulletManager {
     idx 0 =
     idx@ a.bulletCount@ < if {
       do {
-        result.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'
-        a.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'@
-        b.bullets@ idx@ Bullet.SIZE * i64' mem.add Bullet*'@
+        result.bullets@ idx@ Bullet.SIZE * i32' mem.add Bullet*'
+        a.bullets@ idx@ Bullet.SIZE * i32' mem.add Bullet*'@
+        b.bullets@ idx@ Bullet.SIZE * i32' mem.add Bullet*'@
         pc@
         Bullet.lerp
 
